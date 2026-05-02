@@ -67,15 +67,21 @@ Loop until 4.1 green AND 4.3 ≥ 8, or cap hit.
 
 ## Phase 7 — Continuous improvement (post-build, ongoing)
 
-This phase runs *outside* a single `/forge-build` invocation. Once the app is shipped, the user starts the watcher:
+This phase runs *outside* a single `/forge-build` invocation. Once the app is shipped, the user starts **two** loops:
 
 ```
-/loop 30m /forge-watch
+/loop 1h  /forge-watch-logs       # surface production anomalies as issues
+/loop 30m /forge-watch             # work the issue queue, opening PRs
 ```
 
 | Subagent | Loop | Notes |
 |---|---|---|
+| `log-watcher` | every `logWatcher.intervalMin` (default 60) | Queries Better Stack for the lookback window. Infers anomalies (new error classes, error spikes, slow endpoints, broken client routes) and files GitHub issues for ones above threshold. Skips during the post-deploy quiet window. Caps at `maxIssuesPerRun` (default 3). |
 | `issue-watcher` | every `watcher.intervalMin` (default 30) | Polls open GitHub issues, picks up `forge:auto`-labeled items in priority order, dispatches the labeled `forge:agent=*`, opens a PR per issue. Never auto-merges. |
+
+The two loops compose: the log watcher *finds* runtime problems users hit (which they often don't report), turns them into issues, and the issue watcher *works* them into PRs.
+
+**Severity routing.** The log watcher applies `forge:auto` to most anomalies but withholds it from p1 errors that touch authentication, payments, or core user stories — those go through human triage first because auto-fix is too risky.
 
 The watcher closes the loop:
 

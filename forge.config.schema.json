@@ -37,6 +37,19 @@
         "maxPerRun": { "type": "integer", "minimum": 1, "default": 3 }
       }
     },
+    "logWatcher": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true, "description": "Whether the log watcher runs at all" },
+        "intervalMin": { "type": "integer", "minimum": 1, "default": 60, "description": "How often to invoke; pair with /loop matching this" },
+        "lookbackMin": { "type": "integer", "minimum": 1, "default": 60, "description": "How far back to query Better Stack each run" },
+        "errorRatePerMin": { "type": "number", "minimum": 0, "default": 1, "description": "Errors/min on a single signature that constitutes a spike" },
+        "p95LatencyMs": { "type": "integer", "minimum": 0, "default": 2000, "description": "p95 latency above this on any path = slow-endpoint anomaly" },
+        "minOccurrences": { "type": "integer", "minimum": 1, "default": 3, "description": "Minimum hits before a new error class becomes an issue" },
+        "postDeployQuietMin": { "type": "integer", "minimum": 0, "default": 30, "description": "Suppress filing for this many minutes after a deploy" },
+        "maxIssuesPerRun": { "type": "integer", "minimum": 1, "default": 3, "description": "Cap on issues filed per watcher pass" }
+      }
+    },
     "viewports": {
       "type": "object",
       "properties": {
