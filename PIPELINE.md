@@ -62,7 +62,31 @@ Loop until 4.1 green AND 4.3 ≥ 8, or cap hit.
 
 | Step | Subagent | Notes |
 |---|---|---|
-| 6.1 | `retro` | Reads BUILD_LOG, BUGS, handoff scorecards, visual-QA + persona feedback patterns. Writes dated lessons to `.claude/agents/<name>.lessons.md` per subagent. Queues framework-wide lessons in `.forge/rollup/queue.md`. |
+| 6.1 | `retro` | Reads BUILD_LOG, BUGS, handoff scorecards, visual-QA + persona feedback patterns. Writes dated lessons to `.claude/agents/<name>.lessons.md` per subagent. Queues framework-wide lessons in `.forge/rollup/queue.md`. **Files GitHub issues** for concrete improvement opportunities (polish, debt, design follow-ups) with the `forge:auto` label so the watcher can pick them up post-build. |
+| 6.2 | `debug`, `visual-qa`, `tester` | These also file targeted GitHub issues during their normal phases — debt the debug agent spots while fixing a primary bug, polish items keeping visual-QA below 10, and missing test coverage flagged by the tester. See `LABELS.md`. |
+
+## Phase 7 — Continuous improvement (post-build, ongoing)
+
+This phase runs *outside* a single `/forge-build` invocation. Once the app is shipped, the user starts the watcher:
+
+```
+/loop 30m /forge-watch
+```
+
+| Subagent | Loop | Notes |
+|---|---|---|
+| `issue-watcher` | every `watcher.intervalMin` (default 30) | Polls open GitHub issues, picks up `forge:auto`-labeled items in priority order, dispatches the labeled `forge:agent=*`, opens a PR per issue. Never auto-merges. |
+
+The watcher closes the loop:
+
+1. **Build** files improvement issues during/after Phase 6.
+2. **Watcher** picks them up, spawns the right subagent on a `claude/issue-N` branch, runs tests, opens a PR.
+3. **User** reviews and merges.
+4. **Subagent's `.lessons.md`** absorbs anything learned during the issue work for future builds.
+
+Pickup rules (must all be true): open, has `forge:auto`, not in-progress, not assigned to a human, has all three required labels (`forge:type=*`, `forge:agent=*`, `forge:priority=*`). Priority order: p1 > p2 > p3, oldest first.
+
+See `LABELS.md` for the full taxonomy. Run `scripts/forge-init-labels.sh` once per app to create the labels (or let `integration-setup` do it).
 
 The retro phase makes Forge self-improving:
 

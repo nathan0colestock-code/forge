@@ -84,9 +84,54 @@ When in doubt, mark **app-specific**. Framework changes need a higher bar (they 
 - **Do not invent lessons that aren't supported by build evidence.** Every lesson has a concrete reference (a BUILD_LOG line, a bug ID, a score iteration).
 - **Do not write more than ~5 lessons per agent per build.** Be selective. The lessons file is read on every future invocation; bloat dilutes signal.
 
+## Filing GitHub issues for improvement opportunities
+
+In addition to lessons (which change how agents *think*), file GitHub issues for **concrete improvement opportunities** that the build noticed but didn't address. These become the queue that the issue watcher works through after deploy.
+
+When to file:
+- **Visual QA stopped at < 10** but ≥ 8 (passed the gate but had specific items left). File one `forge:type=polish` issue per concrete shortfall the visual-qa report named.
+- **Persona feedback consensus** raised a UX concern that the designer didn't fully resolve. File one `forge:type=design` or `polish` issue.
+- **Test coverage gap** found by the tester but not in scope of any bug. File `forge:type=debt` with `forge:agent=tester`.
+- **Out-of-scope work** the debug agent encountered. File `forge:type=debt`.
+- **Performance / accessibility / SEO opportunities** noted in any phase. File appropriately.
+
+Use `gh issue create` (NOT `mcp__github__*` tools — agents work in the app's own GitHub context):
+
+```bash
+gh issue create \
+  --title "<type>: <one-line>" \
+  --body "$(cat <<EOF
+## Acceptance criteria
+- <observable bullet>
+
+## Context
+Filed by retro after build at $(git rev-parse --short HEAD). <one-sentence trigger from BUILD_LOG or visual-QA report>
+
+## Suggested approach
+<1-2 sentences if you have a hypothesis>
+
+## Forge metadata
+- **Source:** retro
+- **Source build:** $(git rev-parse --short HEAD)
+- **Related files:** <if any>
+- **Related lessons:** .claude/agents/<name>.lessons.md
+EOF
+)" \
+  --label "forge:type=<type>,forge:agent=<agent>,forge:priority=<p1|p2|p3>,forge:auto"
+```
+
+**Apply `forge:auto` only** if all of:
+1. Acceptance criteria are concrete and verifiable.
+2. The change is small (one file or feature, not a refactor).
+3. No new third-party dependencies needed.
+
+Otherwise omit `forge:auto` so a human triages first.
+
+**Cap:** no more than 8 issues per build. Be selective — issue spam dilutes the watcher's signal as much as lesson spam dilutes agent context.
+
 ## Ordering
 
-Run after Phase 5 (deploy). If the build soft-failed mid-pipeline, run anyway — partial builds produce the most useful lessons.
+Run after Phase 5 (deploy). If the build soft-failed mid-pipeline, run anyway — partial builds produce the most useful lessons AND the most useful improvement issues.
 
 ## Output
 
@@ -96,14 +141,22 @@ Print a summary:
 ✓ Retro complete
 
 Lessons written:
-- architect: 1 (1 framework-wide queued)
-- datamodel: 0
-- designer: 2 (0 framework-wide)
-- coder: 1 (1 framework-wide queued)
-- visual-qa: 1 (0 framework-wide)
-- _handoffs: 1 (architect → datamodel)
+- architect:  1 (1 framework-wide queued)
+- datamodel:  0
+- designer:   2 (0 framework-wide)
+- coder:      1 (1 framework-wide queued)
+- visual-qa:  1 (0 framework-wide)
+- _handoffs:  1 (architect → datamodel)
 
-Total: 6 lessons (2 in rollup queue)
+Issues filed: 4 (3 with forge:auto)
+- #N polish: tighten dashboard hierarchy → coder
+- #N design: cooler accent on landing → designer
+- #N debt:   add empty state for /history → coder
+- #N polish: motion on workout-create flow → ui-polish (no forge:auto — too speculative)
 
-Next: run /forge-rollup to PR framework-wide lessons back to the forge repo.
+Total: 6 lessons (2 in rollup queue), 4 issues filed
+
+Next:
+- /forge-rollup  — PR framework-wide lessons back to the forge repo
+- /forge-watch   — start the issue watcher to work through the filed issues
 ```

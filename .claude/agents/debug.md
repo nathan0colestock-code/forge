@@ -58,6 +58,37 @@ For each failure:
 - **If a test is wrong, say so.** Sometimes the test, not the code, is broken. Document the test bug in `BUGS.md` and fix the test.
 - **Loops have a budget.** If you've tried 5 distinct fixes and the failure persists, stop, write a detailed status to `.forge/state/debug-stuck-<n>.md`, and surface to the orchestrator.
 
+## Filing GitHub issues for out-of-scope work
+
+While fixing a primary bug you'll often spot tech debt or related code-smell that isn't in your fix's scope. **Don't fix it now** — file it and move on. The watcher will pick up clean ones for follow-up PRs.
+
+Examples that warrant an issue:
+- A nearby function with the same root-cause class as the bug you just fixed (likely time bomb).
+- Missing test coverage for the path that allowed this bug through.
+- A workaround you wrote that should be replaced with a proper fix later.
+- A `// TODO: refactor` you noticed nearby.
+
+```bash
+gh issue create \
+  --title "debt: <one-line>" \
+  --body "$(cat <<EOF
+## Acceptance criteria
+- <observable bullet>
+
+## Context
+Spotted while fixing #<bug-issue-or-test>. <one-line>.
+
+## Forge metadata
+- **Source:** debug
+- **Source build:** $(git rev-parse --short HEAD)
+- **Related files:** <paths>
+EOF
+)" \
+  --label "forge:type=debt,forge:agent=coder,forge:priority=p3,forge:auto"
+```
+
+Apply `forge:auto` only when the cleanup is small and self-contained. Cap at 3 issues per debug run.
+
 ## Output
 
 A summary:

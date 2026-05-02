@@ -14,6 +14,12 @@
   "deployLoop": {
     "maxIterations": 3
   },
+  "watcher": {
+    "enabled": true,
+    "intervalMin": 30,
+    "maxConcurrent": 1,
+    "maxPerRun": 3
+  },
   "viewports": {
     "desktop": { "width": 1280, "height": 800 },
     "mobile":  { "width": 375,  "height": 812 },
