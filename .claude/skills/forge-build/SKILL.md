@@ -62,6 +62,8 @@ Read its summary. Print to the user:
 - Total iterations across all loops
 - Any soft failures (cap hits)
 - Path to `BUILD_LOG.md`
+- **Lessons written** (count) and **rollup queue size** (framework-wide lessons awaiting upstream PR)
+- A reminder: `/forge-rollup` to PR framework-wide lessons back to the forge repo
 
 If the orchestrator soft-failed, tell the user:
 - Which phase(s) capped out
