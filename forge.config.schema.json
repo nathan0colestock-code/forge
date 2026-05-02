@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Forge Build Config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "autoDeploy": { "type": "boolean", "default": true, "description": "Auto-deploy to Fly.io at end of pipeline" },
+    "wallClockMin": { "type": "integer", "minimum": 0, "default": 0, "description": "Wall-clock cap in minutes; 0 = no cap" },
+    "designLoop": {
+      "type": "object",
+      "properties": {
+        "maxIterations": { "type": "integer", "minimum": 1, "default": 5 },
+        "minVisualScore": { "type": "number", "minimum": 0, "maximum": 10, "default": 8 }
+      }
+    },
+    "qualityLoop": {
+      "type": "object",
+      "properties": {
+        "maxIterations": { "type": "integer", "minimum": 1, "default": 5 },
+        "minVisualScore": { "type": "number", "minimum": 0, "maximum": 10, "default": 8 },
+        "requireAllTestsPassing": { "type": "boolean", "default": true }
+      }
+    },
+    "deployLoop": {
+      "type": "object",
+      "properties": {
+        "maxIterations": { "type": "integer", "minimum": 1, "default": 3 }
+      }
+    },
+    "viewports": {
+      "type": "object",
+      "properties": {
+        "desktop": { "$ref": "#/definitions/viewport" },
+        "mobile":  { "$ref": "#/definitions/viewport" },
+        "tablet":  { "$ref": "#/definitions/viewport" }
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "definitions": {
+    "viewport": {
+      "type": "object",
+      "properties": {
+        "width":  { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["width", "height"]
+    }
+  }
+}

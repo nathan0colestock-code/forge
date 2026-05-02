@@ -1,0 +1,8 @@
+# forge framework gitignore — kept minimal.
+# Per-app gitignore lives in templates/app/.gitignore.
+.DS_Store
+*.log
+node_modules/
+.env
+.env.local
+.forge/state/

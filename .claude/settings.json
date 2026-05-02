@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(pnpm:*)",
+      "Bash(node:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(fly:*)",
+      "Bash(flyctl:*)",
+      "Bash(turso:*)",
+      "Bash(wrangler:*)",
+      "Bash(curl:*)",
+      "Bash(jq:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(rg:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(./scripts/*)",
+      "Bash(scripts/*)",
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:nextjs.org)",
+      "WebFetch(domain:tailwindcss.com)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:framer.com)",
+      "WebFetch(domain:turso.tech)",
+      "WebFetch(domain:orm.drizzle.team)",
+      "WebFetch(domain:clerk.com)",
+      "WebFetch(domain:resend.com)",
+      "WebFetch(domain:fly.io)",
+      "WebFetch(domain:betterstack.com)",
+      "WebFetch(domain:cloudflare.com)"
+    ],
+    "deny": [
+      "Bash(rm -rf /:*)",
+      "Bash(git push --force:*)",
+      "Bash(fly destroy:*)",
+      "Bash(turso db destroy:*)"
+    ]
+  }
+}
