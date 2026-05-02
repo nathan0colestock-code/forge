@@ -43,6 +43,17 @@ In Claude Code:
 - Auto-deploy to Fly.io, with a CI workflow on GitHub Actions
 - A `BUILD_LOG.md`, `BUGS.md`, and `INTEGRATION_STATUS.md` capturing every decision
 
+## The feedback loop (Forge gets better every build)
+
+Forge is **self-improving**. After each build, a `retro` subagent reviews `BUILD_LOG.md`, `BUGS.md`, the handoff scorecard, and the visual-QA / persona-feedback patterns. It writes dated, specific lessons to two destinations:
+
+1. **App-specific lessons** to `.claude/agents/<name>.lessons.md` in this app's repo. Every future build of *this* app reads them automatically — the subagents pick up where they left off.
+2. **Framework-wide lessons** queued in `.forge/rollup/queue.md`. Run `/forge-rollup` to open a PR back to the upstream Forge repo. You review and merge. Other apps run `/forge-update` to absorb the improvements.
+
+**Constraint:** the framework's canonical agent definitions (`.claude/agents/<name>.md`) never auto-mutate. The `retro` agent only writes to `.lessons.md` files. Framework changes always go through a human-reviewed PR. This keeps the system trustworthy — agents accumulate experience without anyone silently rewriting them.
+
+**Handoff scoring:** every subagent rates its inputs on exit (clear / complete / actionable, 1–5 each). The retro agent reads these across builds to spot systemic handoff weaknesses (e.g. "the architect → datamodel handoff scored < 3 in 4 of the last 5 builds — fix the architect prompt").
+
 ## How it works
 
 Forge is a set of [Claude Code subagents](https://docs.claude.com/claude-code/sub-agents) and skills that the orchestrator invokes via the Task tool. There is no separate Node runtime — everything runs inside one Claude Code session.

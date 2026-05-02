@@ -59,3 +59,20 @@ Print:
 - The deployed git SHA
 - Pass/fail of post-deploy curl checks
 - Any non-fatal warnings from `fly deploy`
+
+---
+
+## Lessons & handoffs (Forge feedback loop)
+
+1. **On entry, read your lessons file** at `.claude/agents/infra.lessons.md` if it exists. Each entry is a dated, concrete lesson accumulated from past builds — apply it. Treat lessons as binding additions to the rules above; do not ignore them.
+2. **Also read** `.claude/agents/_handoffs.lessons.md` if it exists. Entries there are about how you work *with* other agents — what your upstream typically misses, what your downstream typically needs.
+3. **On exit, score your inputs.** Append to `.forge/state/handoffs.md`:
+   ```
+   ## <ISO timestamp> — <upstream agent or "user spec"> → infra
+   - Clear: 1–5
+   - Complete: 1–5
+   - Actionable: 1–5
+   - Notes: <one line — what was missing or excellent>
+   ```
+   The retro agent uses this to identify systemic handoff weaknesses across builds.
+4. **Do not edit your own** `.claude/agents/infra.md` — that's the canonical prompt, only mutated via human-reviewed `forge-rollup` PRs. The retro agent writes to `infra.lessons.md`; you read both files and combine them.

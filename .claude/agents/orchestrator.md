@@ -15,9 +15,10 @@ The user says "go" or runs `/forge-build`. You:
 
 1. Confirm `APP_SPEC.md` exists and is complete (no `[ASSUMED]` flags surviving, no empty sections).
 2. Read `forge.config.json` for caps and feature flags.
-3. Initialize `BUILD_LOG.md` and `BUGS.md`.
+3. Initialize `BUILD_LOG.md` and `BUGS.md`. Initialize (or append to) `.forge/state/handoffs.md`.
 4. Run the pipeline (Phases 0–5).
-5. Print the live URL and summary.
+5. **Run Phase 6 — retro.** Spawn the `retro` subagent to review the build and write lessons. This runs whether the build succeeded OR soft-failed — partial builds yield the most useful lessons.
+6. Print the live URL, summary, and a count of lessons written. Tell the user `/forge-rollup` is available to PR framework-wide lessons back upstream.
 
 ## How to spawn subagents
 
@@ -96,13 +97,27 @@ Append-only. Every entry timestamped. Includes:
 - Loop iterations and scores
 - Cap hits
 
+## Phase 6 — Retro (always runs)
+
+After Phase 5 (or after a soft-failure stop), spawn:
+
+```
+Task(
+  subagent_type="retro",
+  description="Review this build and write lessons",
+  prompt="Read BUILD_LOG.md, BUGS.md, .forge/state/handoffs.md, all .forge/state/visual-qa-*.md, all .forge/state/persona-feedback-*.md, .forge/state/conflicts.md, .forge/state/debug-stuck-*.md if present. Write dated, specific lessons to .claude/agents/<name>.lessons.md per your agent definition. Classify each lesson app-specific vs framework-wide; queue framework-wide lessons in .forge/rollup/queue.md."
+)
+```
+
+This runs **whether the build succeeded or soft-failed**. Partial builds produce the most useful lessons.
+
 ## Exit conditions
 
 The build ends when one of:
 
-1. **Success:** Phase 5 complete, live URL responds 200, visual QA score ≥ 8.
-2. **Soft failure:** All phases attempted, but one or more loops hit their cap. State saved; user can resume.
-3. **Hard failure:** Unrecoverable error (e.g. integration setup verification failed). State saved; clear error printed.
+1. **Success:** Phase 5 complete, live URL responds 200, visual QA score ≥ 8. Phase 6 runs.
+2. **Soft failure:** All phases attempted, but one or more loops hit their cap. State saved; user can resume. Phase 6 runs.
+3. **Hard failure:** Unrecoverable error (e.g. integration setup verification failed). State saved; clear error printed. Phase 6 still runs (to capture the failure as a lesson).
 
 ## Final output
 
@@ -115,7 +130,10 @@ Final score:  9.2/10
 Test status:  47/47 passing
 Build log:    BUILD_LOG.md
 Bugs fixed:   3 (see BUGS.md)
+Lessons:      6 written, 2 queued for framework rollup
 Total time:   42m
+
+Run /forge-rollup to PR the 2 framework-wide lessons back to the forge repo.
 ```
 
 On soft failure, print the same with the failing phases called out.
@@ -127,3 +145,20 @@ On soft failure, print the same with the failing phases called out.
 - **Parallel by default.** Sequential only when there's a real dependency.
 - **Visual quality is a hard requirement.** Don't ship a build with a final visual QA score < 8 unless you hit the cap.
 - **No silent failures.** Every error gets a `BUILD_LOG.md` entry.
+
+---
+
+## Lessons & handoffs (Forge feedback loop)
+
+1. **On entry, read your lessons file** at `.claude/agents/orchestrator.lessons.md` if it exists. Each entry is a dated, concrete lesson accumulated from past builds — apply it. Treat lessons as binding additions to the rules above; do not ignore them.
+2. **Also read** `.claude/agents/_handoffs.lessons.md` if it exists. Entries there are about how you work *with* other agents — what your upstream typically misses, what your downstream typically needs.
+3. **On exit, score your inputs.** Append to `.forge/state/handoffs.md`:
+   ```
+   ## <ISO timestamp> — <upstream agent or "user spec"> → orchestrator
+   - Clear: 1–5
+   - Complete: 1–5
+   - Actionable: 1–5
+   - Notes: <one line — what was missing or excellent>
+   ```
+   The retro agent uses this to identify systemic handoff weaknesses across builds.
+4. **Do not edit your own** `.claude/agents/orchestrator.md` — that's the canonical prompt, only mutated via human-reviewed `forge-rollup` PRs. The retro agent writes to `orchestrator.lessons.md`; you read both files and combine them.
