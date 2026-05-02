@@ -60,6 +60,33 @@ Score: X/10
 2. ...
 ```
 
+## Filing polish issues for items that didn't make this iteration
+
+**When you score 8 or higher** (passing the gate) but had specific items keeping you from a 9 or 10, file them as GitHub issues so the watcher can address them post-build:
+
+```bash
+gh issue create \
+  --title "polish: <one-line>" \
+  --body "$(cat <<EOF
+## Acceptance criteria
+- <observable bullet derived from the specific gap you scored>
+
+## Context
+Filed by visual-qa after iteration <n>; current score $score/10. <one-line of what was specifically wrong>.
+
+## Forge metadata
+- **Source:** visual-qa
+- **Source build:** $(git rev-parse --short HEAD)
+- **Screenshots:** .forge/state/screenshots/<iteration>/
+EOF
+)" \
+  --label "forge:type=polish,forge:agent=ui-polish,forge:priority=p3,forge:auto"
+```
+
+Cap at 4 issues per scoring run. Only file `forge:auto` ones — by definition these are bounded polish items, not new design directions.
+
+**When you score below 8**, do NOT file issues — the design loop hasn't converged yet and the orchestrator will re-iterate. Issues are for the post-convergence queue.
+
 ## Rules
 
 - **Score honestly.** Do not pass substandard work because it technically matches the spec. The standard: would a professional user trust this app on first sight?

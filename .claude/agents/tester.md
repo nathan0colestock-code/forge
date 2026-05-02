@@ -42,6 +42,32 @@ Test files under `playwright/`:
 5. Run `npx playwright test --reporter=line`.
 6. If failures: report them. Don't fix them yourself — the debug agent does.
 
+## Filing test-debt issues
+
+If you encounter a user story or acceptance criterion that you can't reasonably test today (e.g. requires a third-party sandbox you don't have, or needs a fixture you couldn't generate), **don't silently skip it**. File an issue:
+
+```bash
+gh issue create \
+  --title "debt: missing test coverage for <story>" \
+  --body "$(cat <<EOF
+## Acceptance criteria
+- A Playwright test exists for: <user story>
+- Test passes on desktop and mobile
+
+## Context
+Filed by tester at $(git rev-parse --short HEAD). Could not write this test in-build because: <one-line reason>.
+
+## Forge metadata
+- **Source:** tester
+- **Source build:** $(git rev-parse --short HEAD)
+- **User story:** <verbatim from APP_SPEC.md>
+EOF
+)" \
+  --label "forge:type=debt,forge:agent=tester,forge:priority=p2,forge:auto"
+```
+
+Cap at 5 issues per test run.
+
 ## Output
 
 Print:

@@ -45,14 +45,19 @@ In Claude Code:
 
 ## The feedback loop (Forge gets better every build)
 
-Forge is **self-improving**. After each build, a `retro` subagent reviews `BUILD_LOG.md`, `BUGS.md`, the handoff scorecard, and the visual-QA / persona-feedback patterns. It writes dated, specific lessons to two destinations:
+Forge is **self-improving** along three axes:
 
-1. **App-specific lessons** to `.claude/agents/<name>.lessons.md` in this app's repo. Every future build of *this* app reads them automatically — the subagents pick up where they left off.
-2. **Framework-wide lessons** queued in `.forge/rollup/queue.md`. Run `/forge-rollup` to open a PR back to the upstream Forge repo. You review and merge. Other apps run `/forge-update` to absorb the improvements.
+**1. Lessons (per-agent learning).** After each build, a `retro` subagent reviews `BUILD_LOG.md`, `BUGS.md`, the handoff scorecard, and visual-QA / persona-feedback patterns. It writes dated, specific lessons to:
+- **App-specific lessons** in `.claude/agents/<name>.lessons.md` (this app's repo). Every future build of *this* app reads them.
+- **Framework-wide lessons** queued in `.forge/rollup/queue.md`. Run `/forge-rollup` to open a PR back to the upstream Forge repo. You review and merge. Other apps run `/forge-update` to absorb the improvements.
 
-**Constraint:** the framework's canonical agent definitions (`.claude/agents/<name>.md`) never auto-mutate. The `retro` agent only writes to `.lessons.md` files. Framework changes always go through a human-reviewed PR. This keeps the system trustworthy — agents accumulate experience without anyone silently rewriting them.
+**2. Handoff scoring.** Every subagent rates its inputs on exit (clear / complete / actionable, 1–5). The retro agent reads these across builds to spot systemic weaknesses (e.g. "architect → datamodel scored < 3 in 4 of the last 5 builds — fix the architect prompt").
 
-**Handoff scoring:** every subagent rates its inputs on exit (clear / complete / actionable, 1–5 each). The retro agent reads these across builds to spot systemic handoff weaknesses (e.g. "the architect → datamodel handoff scored < 3 in 4 of the last 5 builds — fix the architect prompt").
+**3. GitHub issue auto-improvement loop.** During Phase 6 the build files **GitHub issues** for concrete improvement opportunities (polish items below a 10, debt the debug agent spotted, design follow-ups, missing test coverage). After deploy, run `/loop 30m /forge-watch` and the `issue-watcher` subagent polls open issues, picks up `forge:auto`-tagged ones, spawns the right working agent on a `claude/issue-N` branch, runs tests, and opens a PR per issue. You review and merge. The app keeps improving on its own without anyone driving it.
+
+**Constraint:** canonical agent definitions (`.claude/agents/<name>.md`) never auto-mutate, and the watcher never auto-merges. Framework changes go through review (`forge-rollup` PRs); app changes go through review (issue-watcher PRs). The system accumulates experience without anyone silently rewriting it.
+
+See `LABELS.md` for the issue label taxonomy and `PIPELINE.md` for the full Phase 6 + Phase 7 details.
 
 ## How it works
 
@@ -93,6 +98,7 @@ forge/
 └── scripts/
     ├── bootstrap.sh         # install local CLIs
     ├── forge-init.sh        # bootstrap a new app from the framework
+    ├── forge-init-labels.sh # create forge:* labels in the app's GH repo
     ├── deploy.sh            # fly deploy helper
     └── screenshot.sh        # playwright screenshot helper
 ```

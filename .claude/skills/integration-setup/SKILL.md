@@ -92,6 +92,9 @@ gh auth login           # opens browser
 gh repo create <slug> --private --source=. --remote=origin --push
 gh secret set <KEY> --body "<value>"   # for each non-PUBLIC env var
 gh secret set FLY_API_TOKEN --body "$(fly auth token)"
+
+# Create the canonical Forge labels so the issue watcher can route work.
+$FORGE_REPO/scripts/forge-init-labels.sh
 ```
 
 **Step 9: Verify everything.**
