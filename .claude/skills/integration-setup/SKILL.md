@@ -44,6 +44,8 @@ Then prompt (via `AskUserQuestion` or readline) for Publishable Key and Secret K
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=<inferred from spec — first authed key screen, default /dashboard>`
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=<same>`
 
+> **Required Clerk dashboard step after first deploy:** After the Fly app is live, the user must add the deployed URL to Clerk's allowed hosts. In the Clerk dashboard → Configure → Paths → **Fallback development host**, enter `https://<slug>.fly.dev`. Without this, sign-in redirects will silently fail on the deployed URL. Remind the user of this step in `INTEGRATION_STATUS.md`.
+
 **Step 4: Cloudflare R2.**
 ```bash
 wrangler login                              # opens browser
@@ -80,10 +82,12 @@ Capture, write:
 fly auth login          # opens browser
 fly apps create <slug>
 ```
-Read `.env.local`. For every non-`NEXT_PUBLIC_*` variable, run:
+Read `.env.local`. Set **all** variables as Fly secrets — including `NEXT_PUBLIC_*` vars:
 ```bash
 fly secrets set <KEY>="<value>" -a <slug>
 ```
+> **Why `NEXT_PUBLIC_*` vars need to be Fly secrets too:** In Next.js App Router, `layout.tsx` is a Server Component. `process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` in a Server Component is read at **runtime**, not baked in at build time. ClerkProvider passes the key to child Client Components via React context, so client bundles never need the static replacement. All env vars must be runtime secrets — do not skip `NEXT_PUBLIC_*`.
+
 Then `FLY_APP_NAME=<slug>` to `.env.local`.
 
 **Step 8: GitHub.**
