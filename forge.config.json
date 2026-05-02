@@ -20,6 +20,16 @@
     "maxConcurrent": 1,
     "maxPerRun": 3
   },
+  "logWatcher": {
+    "enabled": true,
+    "intervalMin": 60,
+    "lookbackMin": 60,
+    "errorRatePerMin": 1,
+    "p95LatencyMs": 2000,
+    "minOccurrences": 3,
+    "postDeployQuietMin": 30,
+    "maxIssuesPerRun": 3
+  },
   "viewports": {
     "desktop": { "width": 1280, "height": 800 },
     "mobile":  { "width": 375,  "height": 812 },

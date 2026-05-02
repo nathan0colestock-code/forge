@@ -53,7 +53,12 @@ Forge is **self-improving** along three axes:
 
 **2. Handoff scoring.** Every subagent rates its inputs on exit (clear / complete / actionable, 1–5). The retro agent reads these across builds to spot systemic weaknesses (e.g. "architect → datamodel scored < 3 in 4 of the last 5 builds — fix the architect prompt").
 
-**3. GitHub issue auto-improvement loop.** During Phase 6 the build files **GitHub issues** for concrete improvement opportunities (polish items below a 10, debt the debug agent spotted, design follow-ups, missing test coverage). After deploy, run `/loop 30m /forge-watch` and the `issue-watcher` subagent polls open issues, picks up `forge:auto`-tagged ones, spawns the right working agent on a `claude/issue-N` branch, runs tests, and opens a PR per issue. You review and merge. The app keeps improving on its own without anyone driving it.
+**3. GitHub issue auto-improvement loop.** Two complementary loops run after deploy:
+
+- **Issue creation** — during Phase 6 the build files improvement issues (polish items below a 10, debt the debug agent spotted, design follow-ups, missing test coverage). Separately, the **`log-watcher`** subagent queries Better Stack on `/loop 1h /forge-watch-logs`, infers anomalies in production (new error classes, error spikes, slow endpoints, broken client routes), and files matching `forge:type=bug` / `forge:type=debt` issues — turning errors users hit but didn't report into actionable work.
+- **Issue execution** — `/loop 30m /forge-watch` runs the `issue-watcher`, which polls open issues, picks up `forge:auto`-tagged ones, spawns the right working agent on a `claude/issue-N` branch, runs tests, and opens a PR per issue. You review and merge.
+
+Severity routing: the log watcher withholds `forge:auto` for p1 errors (auth, payments, core stories) so they stay in your hands. Everything else flows through automatically.
 
 **Constraint:** canonical agent definitions (`.claude/agents/<name>.md`) never auto-mutate, and the watcher never auto-merges. Framework changes go through review (`forge-rollup` PRs); app changes go through review (issue-watcher PRs). The system accumulates experience without anyone silently rewriting it.
 
