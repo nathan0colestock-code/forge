@@ -10,6 +10,68 @@ Provision the full Forge stack for the current app. The goal: after this skill r
 
 This skill is **re-runnable** — any service that's already configured and valid is skipped.
 
+## Developer profile (zero-touch provisioning)
+
+**Before anything else**, check for a developer profile. If present, all platform services can be provisioned automatically without browser auth flows.
+
+```bash
+# Decode the profile
+if [[ -n "${FORGE_DEVELOPER_PROFILE:-}" ]]; then
+  PROFILE_JSON="$(echo "$FORGE_DEVELOPER_PROFILE" | base64 --decode)"
+elif [[ -f "$HOME/.forge/credentials.json" ]]; then
+  PROFILE_JSON="$(cat "$HOME/.forge/credentials.json")"
+else
+  PROFILE_JSON=""
+fi
+```
+
+If `$PROFILE_JSON` is non-empty, extract credentials with `jq`:
+```bash
+FLY_API_TOKEN="$(echo "$PROFILE_JSON" | jq -r '.fly.FLY_API_TOKEN // empty')"
+TURSO_PLATFORM_TOKEN="$(echo "$PROFILE_JSON" | jq -r '.turso.TURSO_AUTH_TOKEN // empty')"
+CLOUDFLARE_ACCOUNT_ID="$(echo "$PROFILE_JSON" | jq -r '.cloudflare.CLOUDFLARE_ACCOUNT_ID // empty')"
+CLOUDFLARE_API_TOKEN="$(echo "$PROFILE_JSON" | jq -r '.cloudflare.CLOUDFLARE_API_TOKEN // empty')"
+CLOUDFLARE_R2_ACCESS_KEY_ID="$(echo "$PROFILE_JSON" | jq -r '.cloudflare.CLOUDFLARE_R2_ACCESS_KEY_ID // empty')"
+CLOUDFLARE_R2_SECRET_ACCESS_KEY="$(echo "$PROFILE_JSON" | jq -r '.cloudflare.CLOUDFLARE_R2_SECRET_ACCESS_KEY // empty')"
+CLOUDFLARE_R2_ENDPOINT="$(echo "$PROFILE_JSON" | jq -r '.cloudflare.CLOUDFLARE_R2_ENDPOINT // empty')"
+RESEND_API_KEY="$(echo "$PROFILE_JSON" | jq -r '.resend.RESEND_API_KEY // empty')"
+RESEND_FROM_EMAIL="$(echo "$PROFILE_JSON" | jq -r '.resend.RESEND_FROM_EMAIL // empty')"
+BETTERSTACK_API_TOKEN="$(echo "$PROFILE_JSON" | jq -r '.betterstack.BETTERSTACK_API_TOKEN // empty')"
+BETTERSTACK_INGEST_URL="$(echo "$PROFILE_JSON" | jq -r '.betterstack.BETTERSTACK_INGEST_URL // empty')"
+```
+
+When profile credentials are present, **replace browser-based steps with API/CLI calls**:
+
+- **Turso**: `export TURSO_TOKEN=$TURSO_PLATFORM_TOKEN && turso db create <slug> && turso db tokens create <slug>` — no `turso auth login`
+- **Cloudflare R2**: `export CLOUDFLARE_API_TOKEN && wrangler r2 bucket create <slug>-storage` — no `wrangler login`
+- **Resend**: already have the key — skip interactive step entirely
+- **Better Stack source**: create via API instead of dashboard:
+  ```bash
+  curl -s -X POST https://logs.betterstack.com/api/v1/sources \
+    -H "Authorization: Bearer $BETTERSTACK_API_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{\"name\":\"$SLUG\",\"platform\":\"javascript\"}" \
+    | jq -r '{source_token: .data.attributes.token, source_id: .data.id}'
+  ```
+- **Fly**: `export FLY_API_TOKEN && fly apps create <slug>` — no `fly auth login`
+
+The only service that still requires a manual step is **Clerk** (per-app keys, no platform credential).
+
+## Non-interactive / cloud environments
+
+**If `FORGE_DEVELOPER_PROFILE` is absent** and the environment is non-interactive:
+
+```bash
+if [[ "${CI:-}" == "true" ]] || [[ "${FORGE_NONINTERACTIVE:-}" == "true" ]]; then
+  echo "✗ Non-interactive environment detected but no FORGE_DEVELOPER_PROFILE found."
+  echo "  Set FORGE_DEVELOPER_PROFILE to a base64-encoded credentials JSON,"
+  echo "  or run /forge-secrets on a developer machine first."
+  exit 1
+fi
+```
+
+Do NOT fall back to browser-OAuth flows in CI/non-interactive mode.
+
 ## Pre-conditions
 
 - `APP_SPEC.md` exists (used to derive app name, auth providers, email needs).

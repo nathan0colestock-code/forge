@@ -11,6 +11,10 @@ build/
 .env.local
 .env.*.local
 
+# Secrets bundles — never commit
+*.bundle.json
+*.secrets.json
+
 playwright-report/
 test-results/
 playwright/screenshots/

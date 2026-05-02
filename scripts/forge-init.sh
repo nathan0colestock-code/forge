@@ -63,6 +63,28 @@ rm -f "$TARGET_DIR/fly.toml.bak" "$TARGET_DIR/README.md.bak"
 echo "› Initializing git"
 ( cd "$TARGET_DIR" && git init -q && git add -A && git commit -q -m "forge: initial scaffold for $SLUG" )
 
+# ── Propagate developer profile to new app repo ──────────────────────────────
+# Source: FORGE_DEVELOPER_PROFILE env var, or ~/.forge/credentials.json, or
+#         FORGE_DEVELOPER_PROFILE GitHub secret on the forge framework repo.
+PROFILE_VALUE=""
+if [[ -n "${FORGE_DEVELOPER_PROFILE:-}" ]]; then
+  PROFILE_VALUE="$FORGE_DEVELOPER_PROFILE"
+elif [[ -f "$HOME/.forge/credentials.json" ]]; then
+  PROFILE_VALUE="$(base64 < "$HOME/.forge/credentials.json" | tr -d '\n')"
+fi
+
+if [[ -n "$PROFILE_VALUE" ]] && command -v gh >/dev/null 2>&1; then
+  # Create the GitHub repo and set the secret on it
+  echo "› Creating GitHub repo and pushing"
+  ( cd "$TARGET_DIR" \
+    && gh repo create "$SLUG" --private --source=. --remote=origin --push -q 2>/dev/null \
+    && gh secret set FORGE_DEVELOPER_PROFILE --body "$PROFILE_VALUE" \
+    && echo "  ✓ FORGE_DEVELOPER_PROFILE secret set on github.com/$(gh repo view --json nameWithOwner -q .nameWithOwner)" \
+  ) || echo "  ⚠ GitHub push skipped (run 'gh repo create' manually if needed)"
+else
+  echo "  ℹ️  No developer profile found — run /forge-secrets after opening Claude Code"
+fi
+
 cat <<EOF
 
 ✓ Forge app initialized: $TARGET_DIR

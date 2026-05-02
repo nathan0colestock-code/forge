@@ -6,3 +6,7 @@ node_modules/
 .env
 .env.local
 .forge/state/
+
+# Secrets bundles — never commit
+*.bundle.json
+*.secrets.json
