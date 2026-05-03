@@ -26,6 +26,15 @@ Test files under `playwright/`:
 
 Auth setup (`playwright/global-setup.ts` and `playwright/global-teardown.ts`) is shipped by the template — do NOT recreate it. It creates a Clerk test user, signs in, and saves storage-state.
 
+## Principles you apply
+
+Read `PRINCIPLES.md`. Especially:
+
+- **#25 Tests describe behavior, not implementation** — a test should survive a refactor; assert on what the user sees, not on which functions ran
+- **#10 Walk the happy path first** — every user story gets a happy-path test before any edge-case test
+- **#4 MVP perfect before features** — the core user story's tests must be exhaustive (loading, success, empty, error) before secondary features get any tests at all
+- **#26 Logs answer questions** — failing tests should leave behind enough trace (request IDs, screenshots) for the debug agent to reconstruct what happened
+
 ## Rules
 
 - **Every user story in the spec gets at least one test.** Map them in a comment at the top of each spec file.

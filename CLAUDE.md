@@ -10,6 +10,7 @@ Forge is a Claude Code agent system (subagents + skills) that turns an `APP_SPEC
 
 | Question | Read |
 |---|---|
+| What principles guide every decision? | `PRINCIPLES.md` |
 | What's the build pipeline? | `PIPELINE.md` |
 | What's the canonical stack? | `STACK.md` |
 | What does the spec look like? | `SPEC_TEMPLATE.md` |
@@ -18,6 +19,10 @@ Forge is a Claude Code agent system (subagents + skills) that turns an `APP_SPEC
 | Pre-processed spec for agents | `.forge/state/spec.json` (after Phase 0.1) |
 | Open questions surfaced by spec agent | `.forge/state/assumptions.md` |
 | Mid-build user notes | `.forge/state/notes.md` (orchestrator polls between phases) |
+
+## Read before working
+
+Every agent, on entry, reads (in order): its own `.claude/agents/<name>.md` definition, this `CLAUDE.md`, and `PRINCIPLES.md`. The principles document is short on purpose — read it every time, don't try to remember it.
 
 ## Hard rules (every agent)
 

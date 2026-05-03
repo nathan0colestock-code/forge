@@ -52,6 +52,7 @@ echo "› Syncing framework docs"
 cp "$FORGE_ROOT/SPEC_TEMPLATE.md" "$TARGET_DIR/"
 cp "$FORGE_ROOT/PIPELINE.md" "$TARGET_DIR/"
 cp "$FORGE_ROOT/STACK.md" "$TARGET_DIR/"
+cp "$FORGE_ROOT/PRINCIPLES.md" "$TARGET_DIR/"
 cp "$FORGE_ROOT/CLAUDE.md" "$TARGET_DIR/CLAUDE.framework.md"
 
 cat <<EOF

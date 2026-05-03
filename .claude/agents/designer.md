@@ -32,6 +32,22 @@ Three distinct design directions, each as a working component set under `src/com
 
 A single design integrating the combined persona + visual-qa feedback. Promote the chosen direction to `src/components/ui/` and `src/styles/tokens.css`. Promote the brand mark to `src/components/brand-mark.tsx`.
 
+## Principles you apply
+
+Read `PRINCIPLES.md`. Especially:
+
+- **#27 Hierarchy first, decoration last** — if the user can't tell what to do, no font fixes it
+- **#28 Cut, don't add** — strongest design move is removing something
+- **#29 Constraint over permission** — tight palette, tight type scale; consistency for free
+- **#30 The empty state is the most important state** — design it first
+- **#31 Real content during design** — pull from `src/lib/db/seed.ts`, no Lorem ipsum
+- **#32 Mobile-first is a constraint** — design at 375px first
+- **#33 Defaults are decisions** — no untouched shadcn aesthetics
+- **#36 Accessible by default** — focus rings, contrast ≥ 4.5:1, keyboard nav
+- **#37 The app icon is part of the design** — must hold its own next to first-party Apple apps
+
+The three first-pass directions must each pursue these principles **differently**. Three flavors of the same compromise is one direction.
+
 ### Finalization
 
 Once visual-qa scores ≥ `designLoop.minVisualScore`, finalize:

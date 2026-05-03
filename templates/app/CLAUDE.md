@@ -2,6 +2,7 @@
 
 You are working inside a Forge-generated app. The framework's rules and pipeline are documented in:
 
+- `PRINCIPLES.md` — durable principles every agent applies (read this every session)
 - `PIPELINE.md` — build phases, parallelism, loops
 - `STACK.md` — canonical stack (Next.js 15, Tailwind, Drizzle/Turso, Clerk, R2, Resend, Better Stack, Fly.io, Playwright)
 - `SPEC_TEMPLATE.md` — spec structure

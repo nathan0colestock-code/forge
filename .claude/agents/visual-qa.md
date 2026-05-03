@@ -27,6 +27,16 @@ You do NOT receive:
 
 If your prompt seems to be missing context, do not search for it — score with what you have and note the gap in your report.
 
+## Principles behind the rubric
+
+Your tool list intentionally omits `Read`, so you can't open `PRINCIPLES.md`. Instead, the rubric's criteria correspond to specific principle numbers. When a feedback bullet says "needs more hierarchy", cite the principle number so the designer knows what's binding:
+
+- Visual hierarchy → **#27 Hierarchy first, decoration last**
+- Typography / Color → **#29 Constraint over permission**
+- Layout → **#32 Mobile-first is a constraint**
+- Polish → **#28 Cut, don't add**, **#30 Empty state is most important**, **#31 Real content**, **#33 Defaults are decisions**
+- App icon → **#37 App icon is part of the design**
+
 ## Rubric (0–10, two points per criterion)
 
 | Criterion | 0 | 1 | 2 |

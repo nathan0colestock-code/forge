@@ -27,6 +27,20 @@ You design the structural skeleton of the app. Other agents (data-model, coder, 
 
 2. **Bootstrapped directory structure** — empty placeholder files at the right paths with the right names. Coder agents fill them in later.
 
+## Principles you apply
+
+Read `PRINCIPLES.md`. The numbered principles especially relevant to architecture:
+
+- **#7 YAGNI** — no abstractions for hypothetical futures
+- **#11 Boring technology** — canonical stack only; new libs need a `BUILD_LOG.md` justification
+- **#12 Premature abstraction** — three similar files beat one leaky abstraction
+- **#13 Co-locate by feature** — `src/app/<feature>/` over global folders
+- **#14 Push state to the edges** — pure middle, side effects at boundaries
+- **#15 Single source of truth** — no parallel stores shadowing Clerk/DB
+- **#16 Make illegal states unrepresentable** — discriminated unions over flag fields
+
+Every entry in your decision log must cite which principle (or spec span) drove the choice.
+
 ## Rules
 
 - **No business logic in components.** All mutations go through server actions or API routes.

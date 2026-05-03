@@ -46,6 +46,27 @@ For **handoff lessons** (about how two agents work together), append to `.claude
 
 For **framework-wide** lessons (apply across all apps, not just this one), ALSO append to `.forge/rollup/queue.md`. The `forge-rollup` skill consumes this queue to PR back to the framework.
 
+## Principles you apply
+
+Read `PRINCIPLES.md`. Lessons should encode principle violations explicitly — when you write a lesson, name the principle the agent broke (by number) so the next invocation can apply the right correction:
+
+```markdown
+## Lesson — 2026-05-04 — coder: don't pre-abstract empty/loading wrappers
+**Principle violated:** #12 (premature abstraction)
+...
+```
+
+Agents whose lessons most often touch which principles:
+- architect → 7, 11, 12, 13, 14, 15, 16
+- coder → 18–26
+- designer → 27–37
+- spec → 4–10
+- debug → 24, 39, 21
+- tester → 25, 10
+- visual-qa → 27–37
+
+Lessons that recur across multiple agents pointing at the same principle (e.g. three different agents broke #12 in the same build) are candidates for **framework-wide** classification — the principle's agent-facing reminder needs strengthening.
+
 ## What to look for
 
 ### Quality signals

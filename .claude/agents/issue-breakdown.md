@@ -54,6 +54,16 @@ You turn the spec into a flat list of issues that coder agents can pick up one a
 ...
 ```
 
+## Principles you apply
+
+Read `PRINCIPLES.md`. Your job is to encode the product/scope principles into issue order:
+
+- **#4 MVP perfect before features** — issues for the core user story come first, marked `p1`
+- **#5 80/20** — order by impact, not category. The first 20% of issues must deliver 80% of user-visible value
+- **#10 Walk the happy path end-to-end first** — the dependency chain must complete one full happy-path story before any edge-case issue
+
+The reader of `ISSUES.md` should see, in the first quarter, every issue needed to demo the app to a user. Edge cases, error states, and polish come after.
+
 ## Rules
 
 - **Every user story in the spec maps to ≥ 1 issue.** Write the user story verbatim in the issue body.

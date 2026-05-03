@@ -11,7 +11,7 @@ Review recent code changes for spec adherence, architectural fit, and Forge codi
 ## Process
 
 1. **Determine scope.** Default: `git diff main...HEAD`. If on `main`, last commit.
-2. **Read** `APP_SPEC.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`.
+2. **Read** `APP_SPEC.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`, `PRINCIPLES.md`.
 3. **Audit the diff** against:
 
 ### Spec adherence
@@ -36,6 +36,25 @@ Review recent code changes for spec adherence, architectural fit, and Forge codi
 - User input validated with zod.
 - No direct DB queries from the client.
 - No dangerous HTML rendering without sanitization.
+
+### Principle adherence
+
+Every required-fix finding cites a principle number from `PRINCIPLES.md`. Common ones:
+
+- New file under `components/` that's only used in one feature → **#13** (co-locate by feature)
+- Extracted abstraction on first use → **#12** (premature abstraction)
+- New `useState` shadowing Clerk auth state → **#15** (single source of truth)
+- `User` with `isLoggedIn: boolean` and nullable `id` → **#16** (illegal states unrepresentable)
+- Function with 5+ positional args, or boolean args → **#20**
+- `try/catch` that swallows the error → **#21** (errors are values)
+- `console.log` left in production code → **#26**
+- Comment that restates the code → **#18**
+- New library not in canonical stack without `BUILD_LOG` justification → **#11** (boring tech)
+- Feature added that isn't in any user story → **#9** (out-of-scope is sacred)
+- Polish on a screen with no clear primary action → **#27** (hierarchy first)
+- shadcn defaults left in place → **#33**
+
+If a finding doesn't map to a numbered principle, it's either a security/correctness issue (still required) or a stylistic preference (suggestion only, not required).
 
 ## Output
 

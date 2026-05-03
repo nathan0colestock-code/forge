@@ -44,6 +44,7 @@ echo "› Copying framework docs (read-only references)"
 cp "$FORGE_ROOT/SPEC_TEMPLATE.md" "$TARGET_DIR/"
 cp "$FORGE_ROOT/PIPELINE.md" "$TARGET_DIR/"
 cp "$FORGE_ROOT/STACK.md" "$TARGET_DIR/"
+cp "$FORGE_ROOT/PRINCIPLES.md" "$TARGET_DIR/"
 cp "$FORGE_ROOT/forge.config.json" "$TARGET_DIR/"
 
 echo "› Personalizing project name"

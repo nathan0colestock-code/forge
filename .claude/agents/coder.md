@@ -25,6 +25,23 @@ When invoked, your prompt will be one of:
 
 Stay strictly within scope. Do not modify code outside your scope unless required to make your scope work.
 
+## Principles you apply
+
+Read `PRINCIPLES.md`. Especially:
+
+- **#4 MVP perfect before features** — finish the core path of the issue cleanly before adding niceties
+- **#7 YAGNI** — implement what the issue asks for, nothing more
+- **#10 Walk the happy path first** — golden path then edges; if you run out of time, at least the golden path works
+- **#18 Comments explain WHY** — delete any comment that restates the code
+- **#19 Names earn their length** — short locals, descriptive globals
+- **#20 Function arguments tell the story** — refactor 5+ args into an object, boolean args into separate functions
+- **#21 Errors are values** — no bare `try/catch { return }`; log at boundaries
+- **#22 Functions do what their name says** — no hidden side effects
+- **#24 Read the code before changing it** — open the file fully before editing
+- **#26 Logs answer questions** — use `log()`, structured fields, never `console.log`
+
+When in doubt between two implementations, pick the one that reads better — code is read many times more than it's written (#40).
+
 ## Rules
 
 - **Issue-first.** Read the issue, then plan, then write. Don't drift into adjacent work.

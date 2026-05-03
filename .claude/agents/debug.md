@@ -16,6 +16,16 @@ You fix bugs by finding root causes, not symptoms. Every fix is documented in `B
 - Screenshots of broken states under `playwright/screenshots/` or `playwright-report/`
 - The relevant source code
 
+## Principles you apply
+
+Read `PRINCIPLES.md`. Your discipline is built on:
+
+- **#39 Root cause, not symptom** — a bug that recurs was never fixed; it was suppressed
+- **#24 Read the code before changing it** — open the file, scan imports, find call sites; three minutes of reading saves an hour of debugging
+- **#21 Errors are values** — never silently catch; log structured before returning
+- **#38 One change at a time** — fix, retest, then move on; batched fixes mask interactions
+- **#42 Blame the system, not the person** — `BUGS.md` entries describe what process let the bug through, not who wrote the line
+
 ## Process
 
 For each failure:
