@@ -13,7 +13,8 @@ interface Options { requireAuth?: boolean; parseBody?: boolean }
 
 /**
  * Wrap a route handler with structured logging, request IDs, optional auth,
- * and consistent error responses. Every Forge API route uses this.
+ * and consistent error responses. log() is non-blocking — request returns
+ * before logs ship.
  */
 export function handler<TBody = unknown>(fn: Handler<TBody>, opts: Options = {}) {
   return async (req: NextRequest): Promise<Response> => {
@@ -21,6 +22,7 @@ export function handler<TBody = unknown>(fn: Handler<TBody>, opts: Options = {})
     const start = performance.now();
     let userId: string | null = null;
     let status = 200;
+    const path = new URL(req.url).pathname;
 
     try {
       if (opts.requireAuth) {
@@ -52,24 +54,12 @@ export function handler<TBody = unknown>(fn: Handler<TBody>, opts: Options = {})
     } catch (err) {
       status = 500;
       const error = err instanceof Error ? { message: err.message, stack: err.stack } : { message: String(err) };
-      await log('error', 'api.unhandled', {
-        requestId,
-        method: req.method,
-        path: new URL(req.url).pathname,
-        userId,
-        error,
-      });
+      log('error', 'api.unhandled', { requestId, method: req.method, path, userId, error });
       return NextResponse.json({ error: 'internal' }, { status, headers: { 'x-request-id': requestId } });
     } finally {
       const durationMs = Math.round(performance.now() - start);
-      await log(status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info', 'api.request', {
-        requestId,
-        method: req.method,
-        path: new URL(req.url).pathname,
-        userId,
-        durationMs,
-        status,
-      });
+      const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
+      log(level, 'api.request', { requestId, method: req.method, path, userId, durationMs, status });
     }
   };
 }

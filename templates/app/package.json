@@ -15,7 +15,9 @@
     "test": "playwright test",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test playwright/a11y.spec.ts",
-    "screenshot": "tsx scripts/screenshot.ts"
+    "screenshot": "tsx scripts/screenshot.ts",
+    "icons:generate": "tsx scripts/generate-icons.ts",
+    "icons:check": "node -e \"const fs=require('fs');const need=['public/icons/icon-180.png','public/icons/icon-192.png','public/icons/icon-512.png','public/icons/icon-maskable-512.png','public/apple-touch-icon.png'];const missing=need.filter(p=>!fs.existsSync(p));if(missing.length){console.error('Missing icons:\\n  '+missing.join('\\n  '));process.exit(1);}console.log('✓ Icons present.');\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",

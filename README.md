@@ -37,11 +37,15 @@ In Claude Code:
 
 - A Next.js 15 PWA on the canonical Forge stack (see [STACK.md](./STACK.md))
 - Tailwind + shadcn/ui + Framer Motion, with a real opinionated design (not generic AI aesthetic)
+- A **professional brand mark + iPhone home-screen icon** generated from the chosen direction (180, 192, 512, maskable 512, plus apple-touch-icon)
 - Turso + Drizzle, Clerk auth, R2 storage, Resend email — all provisioned automatically
-- Playwright tests covering every user story, on desktop + mobile
-- Structured JSON logging to Better Stack
-- Auto-deploy to Fly.io, with a CI workflow on GitHub Actions
-- A `BUILD_LOG.md`, `BUGS.md`, and `INTEGRATION_STATUS.md` capturing every decision
+- Build-time env validation (zod) so missing secrets fail the build, not the first request
+- Playwright tests covering every user story, on desktop + mobile, run against the **built** app
+- Authed flows pre-wired with a Clerk test user via `playwright/global-setup.ts`
+- Non-blocking, batched, retrying structured JSON logging to Better Stack
+- Auto-deploy to Fly.io, with a CI workflow on GitHub Actions (caches + parallel jobs)
+- Quality gates: visual QA score, a11y serious/critical = 0, code-review + security-review before deploy
+- A `BUILD_LOG.md`, `BUGS.md`, `INTEGRATION_STATUS.md`, and `BUILD_FAILED.md` (only when a hard floor is hit) capturing every decision
 
 ## How it works
 

@@ -1,6 +1,6 @@
 /* tsx scripts/screenshot.ts <iteration> [base-url]
  * Standalone helper used by the visual-score skill outside of test runs.
- * Re-uses the Playwright config's projects (desktop / mobile / tablet).
+ * Captures every route × every viewport in parallel.
  */
 import { chromium, devices } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
@@ -17,29 +17,49 @@ const VIEWPORTS = [
   { name: 'tablet',  ...devices['iPad (gen 7)'] },
 ] as const;
 
-async function main() {
-  const browser = await chromium.launch();
-  for (const v of VIEWPORTS) {
-    const ctx = await browser.newContext({
-      viewport: v.viewport,
-      userAgent: 'userAgent' in v ? v.userAgent : undefined,
-      deviceScaleFactor: 'deviceScaleFactor' in v ? v.deviceScaleFactor : 1,
-      isMobile: 'isMobile' in v ? v.isMobile : false,
-      hasTouch: 'hasTouch' in v ? v.hasTouch : false,
-    });
-    const page = await ctx.newPage();
-    for (const route of ROUTES) {
-      await page.goto(BASE_URL + route);
-      await page.waitForLoadState('networkidle').catch(() => {});
-      const slug = route === '/' ? 'home' : route.replace(/^\//, '').replace(/\W+/g, '-');
-      const dir = path.resolve('.forge/state/screenshots', ITERATION, v.name);
-      await mkdir(dir, { recursive: true });
-      await page.screenshot({ path: path.join(dir, `${slug}.png`), fullPage: true });
-      console.warn(`✓ ${v.name} ${route}`);
-    }
+const READY_SELECTORS = (process.env.FORGE_READY_SELECTOR ?? 'main,header,h1').split(',');
+
+async function captureViewport(browser: Awaited<ReturnType<typeof chromium.launch>>, v: typeof VIEWPORTS[number]) {
+  const ctx = await browser.newContext({
+    viewport: v.viewport,
+    userAgent: 'userAgent' in v ? v.userAgent : undefined,
+    deviceScaleFactor: 'deviceScaleFactor' in v ? v.deviceScaleFactor : 1,
+    isMobile: 'isMobile' in v ? v.isMobile : false,
+    hasTouch: 'hasTouch' in v ? v.hasTouch : false,
+  });
+  try {
+    await Promise.all(
+      ROUTES.map(async (route) => {
+        const page = await ctx.newPage();
+        try {
+          await page.goto(BASE_URL + route, { waitUntil: 'domcontentloaded' });
+          for (const sel of READY_SELECTORS) {
+            const found = await page.locator(sel).first().waitFor({ timeout: 3000 }).then(() => true).catch(() => false);
+            if (found) break;
+          }
+          await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+          const slug = route === '/' ? 'home' : route.replace(/^\//, '').replace(/\W+/g, '-');
+          const dir = path.resolve('.forge/state/screenshots', ITERATION, v.name);
+          await mkdir(dir, { recursive: true });
+          await page.screenshot({ path: path.join(dir, `${slug}.png`), fullPage: true });
+          console.warn(`✓ ${v.name} ${route}`);
+        } finally {
+          await page.close();
+        }
+      }),
+    );
+  } finally {
     await ctx.close();
   }
-  await browser.close();
+}
+
+async function main() {
+  const browser = await chromium.launch();
+  try {
+    await Promise.all(VIEWPORTS.map((v) => captureViewport(browser, v)));
+  } finally {
+    await browser.close();
+  }
 }
 
 main().catch((err) => {

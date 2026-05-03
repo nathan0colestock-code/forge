@@ -1,0 +1,10 @@
+<!--
+  Placeholder brand mark for a fresh Forge app.
+  The designer agent OVERWRITES this with the chosen direction's mark
+  before running `npm run icons:generate`.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="App logo">
+  <rect width="512" height="512" rx="112" fill="#0a0a0a"/>
+  <path d="M160 352 L160 160 L300 160 L300 200 L208 200 L208 240 L284 240 L284 280 L208 280 L208 352 Z" fill="#ffffff"/>
+  <circle cx="360" cy="356" r="22" fill="#FF6B5C"/>
+</svg>

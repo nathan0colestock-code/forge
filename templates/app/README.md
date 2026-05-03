@@ -32,6 +32,18 @@ Visit http://localhost:3000.
 | `npm run db:seed` | Seed local data |
 | `npm run db:studio` | Drizzle Studio |
 | `npm run screenshot` | Capture all key screens to .forge/state/screenshots/ |
+| `npm run icons:generate` | Rasterize public/brand/logo.svg into PWA + apple-touch icons |
+| `npm run icons:check` | Confirm all required icon files exist (CI/pre-deploy gate) |
+
+## Brand & app icon
+
+The brand mark lives at `public/brand/logo.svg`. The designer agent overwrites it with the chosen direction. After any change to the SVG, run:
+
+```bash
+npm run icons:generate
+```
+
+This produces `public/icons/icon-{180,192,512,maskable-512}.png` and `public/apple-touch-icon.png`. When a user adds the deployed app to their iPhone home screen, the icon must look like a first-party Apple app — the visual-qa agent enforces this with a dedicated rubric criterion.
 
 ## Stack
 
