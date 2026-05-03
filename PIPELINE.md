@@ -46,7 +46,7 @@ Loop until score ≥ 8 OR iteration cap (default 5) hit. If cap hit, the orchest
 |---|---|---|
 | 4.1 | `tester` | Writes Playwright tests for every user story; runs them against `npm run dev` |
 | 4.2 | `debug` (skill: `debug-loop`) | If failures: queries Better Stack, fixes root cause, reruns |
-| 4.3 | `visual-qa` | Screenshots full app on desktop/mobile/tablet; score ≥ 8 required |
+| 4.3 | `visual-qa` | Screenshots full app on desktop/mobile/tablet in both light and dark mode; score ≥ 8 required in both modes |
 
 Loop until 4.1 green AND 4.3 ≥ 8, or cap hit.
 
@@ -55,7 +55,7 @@ Loop until 4.1 green AND 4.3 ≥ 8, or cap hit.
 | Step | Subagent | Notes |
 |---|---|---|
 | 5.1 | `infra` | `fly deploy`. Migrations run via `release_command` in `fly.toml`. |
-| 5.2 | `visual-qa` | Screenshots the live URL (not localhost); records final score |
+| 5.2 | `visual-qa` | Screenshots the live URL (not localhost) in both light and dark mode; records final score |
 | 5.3 | `debug` | If live app shows issues local tests missed: fix and redeploy |
 
 ## Outputs

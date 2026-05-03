@@ -39,6 +39,14 @@ External services, APIs, or data sources beyond the canonical Forge stack.
 ## Design Vibe
 The aesthetic in plain language. Reference apps, adjectives, colors, moods. What it should feel like — and what it should absolutely NOT feel like.
 
+## Responsive & Theme Requirements
+All Forge apps must satisfy these non-negotiable baselines — no exceptions, no spec override needed:
+
+- **Responsive**: fully usable on mobile (≥ 375 px), tablet, and desktop. Touch targets ≥ 44 px. No horizontal scroll.
+- **Light & dark mode**: every screen must look polished in both modes. Dark tokens are defined in `globals.css`; the designer agent must supply matching values for both.
+- **System-adaptive**: defaults to the user's OS preference (`prefers-color-scheme`) via `next-themes` (`defaultTheme: "system"`). Manual toggle is optional but system default is required.
+- **No hardcoded colors**: all color values go through CSS custom properties (`var(--bg)`, `var(--fg)`, etc.) so theme switching is seamless.
+
 ## Success Criteria
 3–5 concrete, observable things that must be true for v1 to be done.
 
