@@ -9,27 +9,33 @@
     "wallClockMin": { "type": "integer", "minimum": 0, "default": 0, "description": "Wall-clock cap in minutes; 0 = no cap" },
     "designLoop": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "maxIterations": { "type": "integer", "minimum": 1, "default": 5 },
-        "minVisualScore": { "type": "number", "minimum": 0, "maximum": 10, "default": 8 }
+        "minVisualScore": { "type": "number", "minimum": 0, "maximum": 10, "default": 8, "description": "Soft target — exits the loop early when reached" },
+        "floorVisualScore": { "type": "number", "minimum": 0, "maximum": 10, "default": 6, "description": "Hard floor — if cap is hit below this, build fails (no deploy)" }
       }
     },
     "qualityLoop": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "maxIterations": { "type": "integer", "minimum": 1, "default": 5 },
         "minVisualScore": { "type": "number", "minimum": 0, "maximum": 10, "default": 8 },
+        "floorVisualScore": { "type": "number", "minimum": 0, "maximum": 10, "default": 7, "description": "Hard floor — below this, build fails before Phase 5" },
         "requireAllTestsPassing": { "type": "boolean", "default": true }
       }
     },
     "deployLoop": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "maxIterations": { "type": "integer", "minimum": 1, "default": 3 }
       }
     },
     "watcher": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean", "default": true },
         "intervalMin": { "type": "integer", "minimum": 1, "default": 30 },
@@ -39,6 +45,7 @@
     },
     "logWatcher": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean", "default": true, "description": "Whether the log watcher runs at all" },
         "intervalMin": { "type": "integer", "minimum": 1, "default": 60, "description": "How often to invoke; pair with /loop matching this" },
@@ -52,6 +59,7 @@
     },
     "viewports": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "desktop": { "$ref": "#/definitions/viewport" },
         "mobile":  { "$ref": "#/definitions/viewport" },
@@ -66,6 +74,7 @@
   "definitions": {
     "viewport": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "width":  { "type": "integer", "minimum": 1 },
         "height": { "type": "integer", "minimum": 1 }

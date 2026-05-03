@@ -1,45 +1,50 @@
 ---
 name: design-critique
-description: Run multiple persona subagents in parallel against a design candidate and synthesize their feedback. Used in the Phase 2 design loop.
+description: Run multiple persona subagents AND visual-qa in parallel against a design candidate, then synthesize their feedback. Used in the Phase 2 design loop.
 allowed-tools: Read, Write, Edit, Bash, Task
 ---
 
 # Design Critique
 
-Have each Target User persona react to a design candidate. Synthesize the feedback for the designer.
+Get parallel reactions from each Target User persona AND a blind visual-QA score on the same iteration's screenshots. Synthesize into one feedback document.
 
 ## Inputs
 
-- A design candidate folder (or screenshot folder): `.forge/state/screenshots/<iteration>/`
-- `APP_SPEC.md` (for the personas)
+- A design candidate folder with screenshots: `.forge/state/screenshots/<iteration>/`
+- `.forge/state/spec.json` (for personas, purpose, target users)
 
 ## Process
 
-1. **Parse personas.** Read the Target Users section. Each named persona becomes a separate `persona` subagent.
+1. **Capture screenshots** if not already done (`./scripts/screenshot.sh ...`).
 
-2. **Spawn all personas in parallel** (single response with multiple Task calls):
+2. **Spawn ALL agents in parallel** — single response with multiple Task calls. Personas + visual-qa share the same screenshots and produce independent outputs:
 
 ```
-For each persona P:
-  Task(
-    subagent_type="persona",
-    description="P's first impression",
-    prompt=<see template>
-  )
+For each persona P from spec.json.targetUsers:
+  Task(subagent_type="persona", description="P's first impression", prompt=<see persona template>)
+Task(subagent_type="visual-qa", description="Score iteration <n>", prompt=<see visual-qa template>)
 ```
 
-3. **Collect all feedback files** from `.forge/state/persona-feedback-<slug>-<iteration>.md`.
+3. **Wait for all** to complete. Collect:
+   - `.forge/state/persona-feedback-<slug>-<iteration>.md` per persona
+   - `.forge/state/visual-qa-<iteration>.md` from visual-qa
 
-4. **Synthesize.** Write `.forge/state/design-feedback-<iteration>.md`:
+4. **Synthesize** — write `.forge/state/design-feedback-<iteration>.md`:
 
 ```markdown
 # Design feedback synthesis — Iteration <n>
 
-## Consensus
+Visual QA score: X/10 (target: Y, floor: Z)
+
+## Consensus from personas
 - <issues raised by 2+ personas>
 
 ## Persona-specific
 - <issues raised by only one, but still important>
+
+## Visual QA issues blocking a higher score
+1. ...
+2. ...
 
 ## What's working (consensus)
 - ...
@@ -52,7 +57,7 @@ For each persona P:
 ## Persona prompt template
 
 ```
-You are <persona name>: <persona description from APP_SPEC.md>.
+You are <persona name>: <persona description from spec.json>.
 
 The app's purpose: <One-Sentence Purpose>.
 
@@ -66,9 +71,14 @@ You do NOT know:
 Write your reaction to .forge/state/persona-feedback-<your-slug>-<iteration>.md per your agent definition.
 ```
 
+## Visual-QA prompt template
+
+See `visual-score/SKILL.md` — same template, same blindness rules. The orchestrator passes the right model (sonnet interim, opus final).
+
 ## Output
 
 Return:
 - Number of personas run
+- Visual QA score
 - Path to synthesis file
-- Top 3 issues by consensus
+- Top 3 issues by combined consensus

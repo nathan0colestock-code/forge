@@ -37,11 +37,15 @@ In Claude Code:
 
 - A Next.js 15 PWA on the canonical Forge stack (see [STACK.md](./STACK.md))
 - Tailwind + shadcn/ui + Framer Motion, with a real opinionated design (not generic AI aesthetic)
+- A **professional brand mark + iPhone home-screen icon** generated from the chosen direction (180, 192, 512, maskable 512, plus apple-touch-icon)
 - Turso + Drizzle, Clerk auth, R2 storage, Resend email — all provisioned automatically
-- Playwright tests covering every user story, on desktop + mobile
-- Structured JSON logging to Better Stack
-- Auto-deploy to Fly.io, with a CI workflow on GitHub Actions
-- A `BUILD_LOG.md`, `BUGS.md`, and `INTEGRATION_STATUS.md` capturing every decision
+- Build-time env validation (zod) so missing secrets fail the build, not the first request
+- Playwright tests covering every user story, on desktop + mobile, run against the **built** app
+- Authed flows pre-wired with a Clerk test user via `playwright/global-setup.ts`
+- Non-blocking, batched, retrying structured JSON logging to Better Stack
+- Auto-deploy to Fly.io, with a CI workflow on GitHub Actions (caches + parallel jobs)
+- Quality gates: visual QA score, a11y serious/critical = 0, code-review + security-review before deploy
+- A `BUILD_LOG.md`, `BUGS.md`, `INTEGRATION_STATUS.md`, and `BUILD_FAILED.md` (only when a hard floor is hit) capturing every decision
 
 ## The feedback loop (Forge gets better every build)
 
@@ -70,8 +74,8 @@ Forge is a set of [Claude Code subagents](https://docs.claude.com/claude-code/su
 
 ```
 .claude/
-├── agents/        # 13 specialized subagents (architect, coder, tester, ...)
-└── skills/        # The orchestrator + 8 supporting skills
+├── agents/        # specialized subagents (architect, coder, tester, designer, retro, watchers, ...)
+└── skills/        # the orchestrator + helper skills (forge-build, forge-watch, forge-rollup, ...)
 ```
 
 The orchestrator (`/.claude/skills/forge-build/SKILL.md`) reads `APP_SPEC.md` and drives the pipeline described in [PIPELINE.md](./PIPELINE.md).
@@ -83,29 +87,33 @@ Everything in the stack is free to start except Fly.io (~$2–5/mo for one alway
 ## Safety
 
 - **Auto-deploy is on by default.** Every successful build deploys to a real Fly.io app. Disable with `forge.config.json` → `autoDeploy: false`.
-- **Iteration caps.** Each loop is capped at 5 iterations and total wall-clock at 60 min. Override in `forge.config.json` if needed.
+- **Iteration caps + hard floors.** Each loop is capped at 5 iterations. Hitting cap above `floorVisualScore` = soft failure (deploys). Hitting cap below floor or with failing tests = hard failure (does NOT deploy).
+- **Watchers never auto-merge.** Both the log watcher and issue watcher open PRs. You review and merge.
 - **Secrets never leave your machine.** `.env.local` is gitignored; Fly + GitHub secrets are set via CLI.
 
 ## Repo layout
 
 ```
 forge/
-├── README.md                # this file
-├── STACK.md                 # the canonical stack
-├── PIPELINE.md              # build pipeline
-├── SPEC_TEMPLATE.md         # the app spec template
-├── forge.config.json        # default build limits
+├── README.md                   # this file
+├── CLAUDE.md                   # entry-point doc Claude Code reads first
+├── STACK.md                    # the canonical stack
+├── PIPELINE.md                 # build pipeline (Phases 0–7)
+├── SPEC_TEMPLATE.md            # the app spec template
+├── LABELS.md                   # GitHub label taxonomy for the issue loop
+├── forge.config.json           # default build limits + watcher config
 ├── .claude/
-│   ├── agents/              # subagent definitions
-│   └── skills/              # skills (orchestrator + helpers)
+│   ├── agents/                 # subagent definitions
+│   └── skills/                 # skills (orchestrator + helpers)
 ├── templates/
-│   └── app/                 # the Next.js PWA scaffold
+│   └── app/                    # the Next.js PWA scaffold
 └── scripts/
-    ├── bootstrap.sh         # install local CLIs
-    ├── forge-init.sh        # bootstrap a new app from the framework
-    ├── forge-init-labels.sh # create forge:* labels in the app's GH repo
-    ├── deploy.sh            # fly deploy helper
-    └── screenshot.sh        # playwright screenshot helper
+    ├── bootstrap.sh            # install local CLIs
+    ├── forge-init.sh           # bootstrap a new app from the framework
+    ├── forge-init-labels.sh    # create forge:* labels in the app's GH repo
+    ├── forge-sync-claude.sh    # sync framework agents/skills into an existing app
+    ├── deploy.sh               # fly deploy helper
+    └── screenshot.sh           # playwright screenshot helper
 ```
 
 ## License

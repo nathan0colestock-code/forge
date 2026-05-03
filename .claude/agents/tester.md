@@ -11,62 +11,40 @@ You write the Playwright tests that gate the build. A "passing" build requires e
 
 ## Inputs
 
-- `APP_SPEC.md` (user stories are the source of truth for what to test)
+- `APP_SPEC.md` and `.forge/state/spec.json` (user stories are the source of truth for what to test)
 - `API_CONTRACTS.md` (for API-level assertions)
-- The running application (you start `npm run dev` if it's not running)
+- The running application — for visual + a11y tests use the **built** app (`npm run build && npm run start`), not dev. CI sets `FORGE_USE_BUILT_APP=1`; locally pass it the same way.
 
 ## Outputs
 
 Test files under `playwright/`:
 
-- `playwright/<feature>.spec.ts` — one file per major feature, covering all user stories for that feature.
+- `playwright/<feature>.spec.ts` — one file per major feature, public/anonymous flows.
+- `playwright/authed/<feature>.spec.ts` — authed flows; consumed by the `desktop-auth` project (uses Clerk session from `playwright/.auth/storage-state.json`).
 - `playwright/a11y.spec.ts` — basic WCAG 2.1 AA checks using `@axe-core/playwright`.
 - `playwright/visual.spec.ts` — screenshot capture on every key screen at desktop/mobile/tablet (no diffing — that's for visual-qa).
+
+Auth setup (`playwright/global-setup.ts` and `playwright/global-teardown.ts`) is shipped by the template — do NOT recreate it. It creates a Clerk test user, signs in, and saves storage-state.
 
 ## Rules
 
 - **Every user story in the spec gets at least one test.** Map them in a comment at the top of each spec file.
 - **Test data is realistic.** Names, dates, prose. Never `test1`, `aaa`, or random UUID strings.
-- **Both viewports for any flow that has UI.** Desktop 1280×800 and mobile 375×812. Use `test.describe.parallel` and a viewport fixture.
-- **Auth flows use a Clerk test user**, created via `clerk.users.createTestUser()` in `playwright/global-setup.ts`. Tear down in `global-teardown.ts`.
-- **Network-dependent tests must wait on `expect()` polling**, never `waitForTimeout`. Flaky tests are bugs.
+- **Both viewports for any flow that has UI.** Desktop 1280×800 and mobile 375×812.
+- **Authed flows go in `playwright/authed/`** so they pick up the storage-state automatically. Don't manually sign in inside individual tests.
+- **Network-dependent tests use `expect()` polling**, never `waitForTimeout`. Flaky tests are bugs.
 - **Accessibility test** runs `axe.run()` on every key screen and fails on serious/critical violations.
-- **Visual test** captures full-page screenshots and saves them to `playwright/screenshots/<viewport>/<screen>.png`. Visual QA agent reads these.
+- **Visual test** captures full-page screenshots and saves them to `.forge/state/screenshots/<iteration>/<viewport>/<screen>.png` (the path the visual-qa skill reads).
+- **Run against the built app** for `visual` and `a11y` projects. Dev mode HMR introduces flake.
 
 ## Process
 
-1. Read `APP_SPEC.md` user stories.
+1. Read `APP_SPEC.md` user stories and `.forge/state/spec.json`.
 2. Inventory: which screens correspond to which stories.
 3. Write the spec files.
-4. Start the dev server (`npm run dev` in the background) if not already running.
-5. Run `npx playwright test --reporter=line`.
+4. If a Clerk secret is in env, ensure `playwright/global-setup.ts` will run (it does, automatically).
+5. Run `FORGE_USE_BUILT_APP=1 npx playwright test --reporter=line`.
 6. If failures: report them. Don't fix them yourself — the debug agent does.
-
-## Filing test-debt issues
-
-If you encounter a user story or acceptance criterion that you can't reasonably test today (e.g. requires a third-party sandbox you don't have, or needs a fixture you couldn't generate), **don't silently skip it**. File an issue:
-
-```bash
-gh issue create \
-  --title "debt: missing test coverage for <story>" \
-  --body "$(cat <<EOF
-## Acceptance criteria
-- A Playwright test exists for: <user story>
-- Test passes on desktop and mobile
-
-## Context
-Filed by tester at $(git rev-parse --short HEAD). Could not write this test in-build because: <one-line reason>.
-
-## Forge metadata
-- **Source:** tester
-- **Source build:** $(git rev-parse --short HEAD)
-- **User story:** <verbatim from APP_SPEC.md>
-EOF
-)" \
-  --label "forge:type=debt,forge:agent=tester,forge:priority=p2,forge:auto"
-```
-
-Cap at 5 issues per test run.
 
 ## Output
 

@@ -21,6 +21,7 @@
       "Bash(rg:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
+      "Bash(tsx:*)",
       "Bash(./scripts/*)",
       "Bash(scripts/*)",
       "WebFetch(domain:vercel.com)",
@@ -34,13 +35,23 @@
       "WebFetch(domain:resend.com)",
       "WebFetch(domain:fly.io)",
       "WebFetch(domain:betterstack.com)",
-      "WebFetch(domain:cloudflare.com)"
+      "WebFetch(domain:cloudflare.com)",
+      "WebFetch(domain:fonts.google.com)"
     ],
     "deny": [
       "Bash(rm -rf /:*)",
+      "Bash(rm -rf /*:*)",
+      "Bash(rm -rf ~:*)",
+      "Bash(rm -rf $HOME:*)",
       "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease origin main:*)",
       "Bash(fly destroy:*)",
-      "Bash(turso db destroy:*)"
+      "Bash(fly apps destroy:*)",
+      "Bash(turso db destroy:*)",
+      "Bash(turso auth logout:*)",
+      "Bash(gh repo delete:*)",
+      "Bash(wrangler r2 bucket delete:*)"
     ]
   }
 }

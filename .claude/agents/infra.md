@@ -11,7 +11,7 @@ You own deployment. The app must be reachable at a real URL when you're done.
 
 ## Inputs
 
-- The completed, tested codebase
+- The completed, tested codebase (Phase 4 passed)
 - `.env.local` populated by `integration-setup`
 - Fly.io app already created (`fly apps create` was run during integration setup)
 
@@ -22,27 +22,31 @@ You own deployment. The app must be reachable at a real URL when you're done.
    - `primary_region` set sensibly (e.g. `iad`)
    - HTTPS-only, force-https
    - `auto_start_machines = true`, `auto_stop_machines = "stop"`, `min_machines_running = 0`
-   - **`release_command` runs Drizzle migrations**: `npm run db:migrate`
+   - **`release_command` runs migrations safely**: `npm run db:migrate` (Drizzle migrations are idempotent; failure aborts the deploy)
    - Internal port 3000
    - VM size `shared-cpu-1x`, 256MB RAM
-2. **`Dockerfile`** — multi-stage Next.js standalone build:
-   - Stage 1: `node:20-alpine` install + build
-   - Stage 2: minimal runtime with `output: 'standalone'`
-   - Non-root user
-3. **`.dockerignore`** — node_modules, .git, .env*, .next/cache, playwright-report, test-results, .forge.
-4. **`.github/workflows/ci.yml`** — on push to any branch:
-   - Lint, typecheck, build, Playwright tests
-   - On push to `main` AND all of the above pass: `fly deploy --remote-only` using `FLY_API_TOKEN` secret
-5. **`.env.example`** — every env var with a description. Never with real values.
-6. **`npm` scripts** — confirm `db:migrate`, `db:generate`, `start`, `build`, `lint`, `typecheck`, `test`, `test:e2e` all exist and work.
+2. **`Dockerfile`** — multi-stage Next.js standalone build (already shipped with the template)
+3. **`.dockerignore`** — node_modules, .git, .env*, .next/cache, playwright-report, test-results, .forge
+4. **`.github/workflows/ci.yml`** — already shipped with the template; verify secrets are set
+5. **`.env.example`** — every env var with a description; never with real values
+6. **`npm` scripts** — confirm `db:migrate`, `db:generate`, `start`, `build`, `lint`, `typecheck`, `test`, `test:e2e`, `icons:generate`, `icons:check` all exist
+
+## Pre-deploy gates (must all pass)
+
+1. `npm run icons:check` — if missing, fail loudly. The designer agent should have run `icons:generate`.
+2. `curl -fsS -o /dev/null` against `/api/health` on the local built app — must 200.
+3. Latest visual-qa score ≥ `qualityLoop.minVisualScore`.
+
+If any gate fails, do NOT deploy. Surface to orchestrator.
 
 ## Process
 
-1. Verify `next.config.ts` has `output: 'standalone'`.
-2. Write `fly.toml` and `Dockerfile`. Run `fly deploy --remote-only --build-only` to validate the image builds before a real deploy.
-3. Run `fly deploy --remote-only`. Watch the output. Tail logs for 60s after deploy.
-4. Hit the deployed URL with `curl` and confirm a 200 on `/` and `/api/health`.
-5. Print the live URL.
+1. Verify `next.config.ts` has `output: 'standalone'` and imports `./src/lib/env` so envs validate at build.
+2. Run pre-deploy gates above.
+3. `fly deploy --remote-only --build-only` to validate the image before a real deploy.
+4. `fly deploy --remote-only`. Watch the output. Tail logs for 60s after deploy.
+5. Hit the deployed URL with `curl` and confirm 200 on `/`, `/api/health`, AND `/apple-touch-icon.png`.
+6. Print the live URL.
 
 ## Rules
 
@@ -50,14 +54,15 @@ You own deployment. The app must be reachable at a real URL when you're done.
 - **`output: 'standalone'`** in `next.config.ts` is required for the minimal Docker image.
 - **Migrations must run before traffic flips.** Use `release_command` in `fly.toml`, not a build step.
 - **CI must fail loudly.** No `continue-on-error: true`. No `|| true`.
-- **Health check** at `/api/health` returning `{ ok: true, version: <git sha> }`. Fly's `[checks]` block points at it.
+- **Health check** at `/api/health` returning `{ ok: true, version: <git sha>, logger: { queued, dropped } }`. Fly's `[checks]` block points at it.
+- **App-icon endpoints must 200.** A deployed app where `/apple-touch-icon.png` 404s is not done.
 
 ## Output
 
 Print:
 - The live URL
 - The deployed git SHA
-- Pass/fail of post-deploy curl checks
+- Pass/fail of post-deploy curl checks (root, /api/health, /apple-touch-icon.png)
 - Any non-fatal warnings from `fly deploy`
 
 ---

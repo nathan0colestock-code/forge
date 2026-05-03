@@ -4,11 +4,13 @@
   "wallClockMin": 0,
   "designLoop": {
     "maxIterations": 5,
-    "minVisualScore": 8
+    "minVisualScore": 8,
+    "floorVisualScore": 6
   },
   "qualityLoop": {
     "maxIterations": 5,
     "minVisualScore": 8,
+    "floorVisualScore": 7,
     "requireAllTestsPassing": true
   },
   "deployLoop": {
@@ -36,18 +38,24 @@
     "tablet":  { "width": 768,  "height": 1024 }
   },
   "models": {
-    "orchestrator": "claude-opus-4-7",
-    "spec":         "claude-opus-4-7",
-    "architect":    "claude-opus-4-7",
-    "datamodel":    "claude-sonnet-4-6",
-    "designer":     "claude-opus-4-7",
-    "uiPolish":     "claude-sonnet-4-6",
-    "coder":        "claude-sonnet-4-6",
-    "tester":       "claude-sonnet-4-6",
-    "visualQa":     "claude-opus-4-7",
-    "logger":       "claude-haiku-4-5-20251001",
-    "infra":        "claude-sonnet-4-6",
-    "debug":        "claude-opus-4-7",
-    "persona":      "claude-sonnet-4-6"
+    "orchestrator":    "claude-opus-4-7",
+    "spec":            "claude-opus-4-7",
+    "architect":       "claude-opus-4-7",
+    "datamodel":       "claude-sonnet-4-6",
+    "designer":        "claude-opus-4-7",
+    "uiPolish":        "claude-sonnet-4-6",
+    "coder":           "claude-sonnet-4-6",
+    "tester":          "claude-sonnet-4-6",
+    "visualQa":        "claude-sonnet-4-6",
+    "visualQaFinal":   "claude-opus-4-7",
+    "logger":          "claude-haiku-4-5-20251001",
+    "infra":           "claude-sonnet-4-6",
+    "debug":           "claude-opus-4-7",
+    "persona":         "claude-sonnet-4-6",
+    "codeReview":      "claude-sonnet-4-6",
+    "securityReview":  "claude-opus-4-7",
+    "retro":           "claude-opus-4-7",
+    "logWatcher":      "claude-opus-4-7",
+    "issueWatcher":    "claude-sonnet-4-6"
   }
 }
