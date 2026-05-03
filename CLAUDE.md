@@ -31,6 +31,7 @@ Forge is a Claude Code agent system (subagents + skills) that turns an `APP_SPEC
 8. **Quality floor is hard.** If a loop hits its cap below `floorVisualScore` or with failing tests, the build fails — it does NOT deploy.
 9. **Comments explain WHY, not WHAT.** Default to no comments.
 10. **App icon is a deliverable, not an afterthought.** Every Forge app ships professional iPhone-quality home-screen icons (180, 192, 512, maskable 512) generated from the chosen brand mark.
+11. **This repo is public.** Every commit must be safe to publish. Before staging anything, sanity-check that you are NOT committing: API keys, OAuth tokens, JWTs, Clerk/Resend/Turso/R2/Fly/Better Stack/GitHub credentials, `.env`/`.env.local`, private keys (`*.pem`/`*.key`), `settings.local.json`, customer data, real user emails, or internal hostnames. `.env.example` is the only env file allowed in the repo, and it must contain placeholders only. If integration-setup or any agent ever wants to write a real value into a tracked file, that's a bug — write to `.env.local` (gitignored) or use `gh secret set` / `fly secrets set`.
 
 ## Forbidden
 

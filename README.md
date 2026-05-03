@@ -1,120 +1,53 @@
 # Forge
 
-A portable, Git-based agentic development system for [Claude Code](https://claude.ai/code) that turns a voice-memo brain dump into a deployed, polished progressive web app.
+**Forge turns a brain dump into a deployed, polished progressive web app.** Paste a voice memo, approve the spec, walk away. Forge runs the whole pipeline — architecture, design, code, tests, visual QA, deploy — and prints a live URL.
 
-After you approve the spec, you don't touch anything. Forge runs the full pipeline — architecture, design, code, tests, visual QA, deploy — and prints a live URL when it's done.
+It's a set of [Claude Code](https://claude.ai/code) subagents and skills. No separate runtime. Open it in Claude Code and you're done.
 
-## Quickstart
+## Get it
 
-```bash
-# 1. Clone forge once (the framework lives here)
-git clone https://github.com/<you>/forge.git ~/forge
-
-# 2. Install local deps (Claude Code, fly, gh, wrangler, turso CLIs)
-~/forge/scripts/bootstrap.sh
-
-# 3. Initialize a new app from the framework
-~/forge/scripts/forge-init.sh my-app   # creates ~/forge-apps/my-app
-
-# 4. Open it in Claude Code
-cd ~/forge-apps/my-app && claude
-```
-
-In Claude Code:
+Paste this into Claude Code:
 
 ```
-> [paste your voice memo transcript or brain dump]
-> /spec-interview
-# Claude fills SPEC_TEMPLATE.md → APP_SPEC.md, asks only what it can't infer.
-# Review APP_SPEC.md. Edit anything you want.
-
-> /forge-build
-# Forge runs the full pipeline. Do not touch anything.
-# When it finishes it prints a live URL.
+Clone https://github.com/nathan0colestock-code/forge into ~/forge, run
+~/forge/scripts/bootstrap.sh, and tell me what to do next.
 ```
+
+## Use it
+
+Open Claude Code in any directory and paste:
+
+```
+Read ~/forge/README.md and ~/forge/PIPELINE.md, then walk me through
+building my first Forge app. I'll describe what I want to build; you
+ask whatever you need to fill out the spec, then run /forge-build.
+```
+
+That's the whole interface. Claude handles the rest.
 
 ## What you get per app
 
-- A Next.js 15 PWA on the canonical Forge stack (see [STACK.md](./STACK.md))
-- Tailwind + shadcn/ui + Framer Motion, with a real opinionated design (not generic AI aesthetic)
-- A **professional brand mark + iPhone home-screen icon** generated from the chosen direction (180, 192, 512, maskable 512, plus apple-touch-icon)
-- Turso + Drizzle, Clerk auth, R2 storage, Resend email — all provisioned automatically
-- Build-time env validation (zod) so missing secrets fail the build, not the first request
-- Playwright tests covering every user story, on desktop + mobile, run against the **built** app
-- Authed flows pre-wired with a Clerk test user via `playwright/global-setup.ts`
-- Non-blocking, batched, retrying structured JSON logging to Better Stack
-- Auto-deploy to Fly.io, with a CI workflow on GitHub Actions (caches + parallel jobs)
-- Quality gates: visual QA score, a11y serious/critical = 0, code-review + security-review before deploy
-- A `BUILD_LOG.md`, `BUGS.md`, `INTEGRATION_STATUS.md`, and `BUILD_FAILED.md` (only when a hard floor is hit) capturing every decision
-
-## The feedback loop (Forge gets better every build)
-
-Forge is **self-improving** along three axes:
-
-**1. Lessons (per-agent learning).** After each build, a `retro` subagent reviews `BUILD_LOG.md`, `BUGS.md`, the handoff scorecard, and visual-QA / persona-feedback patterns. It writes dated, specific lessons to:
-- **App-specific lessons** in `.claude/agents/<name>.lessons.md` (this app's repo). Every future build of *this* app reads them.
-- **Framework-wide lessons** queued in `.forge/rollup/queue.md`. Run `/forge-rollup` to open a PR back to the upstream Forge repo. You review and merge. Other apps run `/forge-update` to absorb the improvements.
-
-**2. Handoff scoring.** Every subagent rates its inputs on exit (clear / complete / actionable, 1–5). The retro agent reads these across builds to spot systemic weaknesses (e.g. "architect → datamodel scored < 3 in 4 of the last 5 builds — fix the architect prompt").
-
-**3. GitHub issue auto-improvement loop.** Two complementary loops run after deploy:
-
-- **Issue creation** — during Phase 6 the build files improvement issues (polish items below a 10, debt the debug agent spotted, design follow-ups, missing test coverage). Separately, the **`log-watcher`** subagent queries Better Stack on `/loop 1h /forge-watch-logs`, infers anomalies in production (new error classes, error spikes, slow endpoints, broken client routes), and files matching `forge:type=bug` / `forge:type=debt` issues — turning errors users hit but didn't report into actionable work.
-- **Issue execution** — `/loop 30m /forge-watch` runs the `issue-watcher`, which polls open issues, picks up `forge:auto`-tagged ones, spawns the right working agent on a `claude/issue-N` branch, runs tests, and opens a PR per issue. You review and merge.
-
-Severity routing: the log watcher withholds `forge:auto` for p1 errors (auth, payments, core stories) so they stay in your hands. Everything else flows through automatically.
-
-**Constraint:** canonical agent definitions (`.claude/agents/<name>.md`) never auto-mutate, and the watcher never auto-merges. Framework changes go through review (`forge-rollup` PRs); app changes go through review (issue-watcher PRs). The system accumulates experience without anyone silently rewriting it.
-
-See `LABELS.md` for the issue label taxonomy and `PIPELINE.md` for the full Phase 6 + Phase 7 details.
+- A Next.js 15 PWA on the canonical Forge stack ([STACK.md](./STACK.md))
+- Opinionated design + a real iPhone home-screen icon (180/192/512/maskable)
+- Auth (Clerk), DB (Turso/Drizzle), storage (R2), email (Resend), logs (Better Stack), deploy (Fly.io) — all provisioned for you
+- Playwright tests covering every user story, on desktop + mobile
+- CI on GitHub Actions; auto-deploy on merge to `main`
+- Hard quality floors (visual + a11y + tests) — bad builds refuse to ship
+- A `BUILD_LOG.md` capturing every decision, and `.lessons.md` files that make Forge get better with every build you ship
 
 ## How it works
 
-Forge is a set of [Claude Code subagents](https://docs.claude.com/claude-code/sub-agents) and skills that the orchestrator invokes via the Task tool. There is no separate Node runtime — everything runs inside one Claude Code session.
-
-```
-.claude/
-├── agents/        # specialized subagents (architect, coder, tester, designer, retro, watchers, ...)
-└── skills/        # the orchestrator + helper skills (forge-build, forge-watch, forge-rollup, ...)
-```
-
-The orchestrator (`/.claude/skills/forge-build/SKILL.md`) reads `APP_SPEC.md` and drives the pipeline described in [PIPELINE.md](./PIPELINE.md).
+[PIPELINE.md](./PIPELINE.md) shows the full Phase 0–7 flow. The orchestrator agent reads `APP_SPEC.md` and drives every step. Quality gates between phases. Two ongoing loops after deploy: a log watcher that turns production anomalies into GitHub issues, and an issue watcher that opens PRs that fix them.
 
 ## Costs
 
-Everything in the stack is free to start except Fly.io (~$2–5/mo for one always-on app). See [STACK.md](./STACK.md) for the full ledger.
+Free to start except Fly.io (~$2–5/mo for one always-on app). See [STACK.md](./STACK.md).
 
 ## Safety
 
-- **Auto-deploy is on by default.** Every successful build deploys to a real Fly.io app. Disable with `forge.config.json` → `autoDeploy: false`.
-- **Iteration caps + hard floors.** Each loop is capped at 5 iterations. Hitting cap above `floorVisualScore` = soft failure (deploys). Hitting cap below floor or with failing tests = hard failure (does NOT deploy).
-- **Watchers never auto-merge.** Both the log watcher and issue watcher open PRs. You review and merge.
-- **Secrets never leave your machine.** `.env.local` is gitignored; Fly + GitHub secrets are set via CLI.
-
-## Repo layout
-
-```
-forge/
-├── README.md                   # this file
-├── CLAUDE.md                   # entry-point doc Claude Code reads first
-├── STACK.md                    # the canonical stack
-├── PIPELINE.md                 # build pipeline (Phases 0–7)
-├── SPEC_TEMPLATE.md            # the app spec template
-├── LABELS.md                   # GitHub label taxonomy for the issue loop
-├── forge.config.json           # default build limits + watcher config
-├── .claude/
-│   ├── agents/                 # subagent definitions
-│   └── skills/                 # skills (orchestrator + helpers)
-├── templates/
-│   └── app/                    # the Next.js PWA scaffold
-└── scripts/
-    ├── bootstrap.sh            # install local CLIs
-    ├── forge-init.sh           # bootstrap a new app from the framework
-    ├── forge-init-labels.sh    # create forge:* labels in the app's GH repo
-    ├── forge-sync-claude.sh    # sync framework agents/skills into an existing app
-    ├── deploy.sh               # fly deploy helper
-    └── screenshot.sh           # playwright screenshot helper
-```
+- **`.env.local` is gitignored.** Secrets go to Fly Secrets and GitHub Secrets via CLI, never into the repo.
+- **This repo is public** — `./scripts/safe-to-publish.sh` scans for accidentally-committed credentials before every push.
+- **Watchers never auto-merge.** Every change flows through a PR you approve.
 
 ## License
 
