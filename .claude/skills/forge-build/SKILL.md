@@ -95,6 +95,8 @@ Read its summary. Print to the user:
 - Any hard failures (cap hits below floor → no deploy)
 - Path to `BUILD_LOG.md`
 - Path to `BUILD_FAILED.md` (if applicable)
+- **Lessons written** (count, from Phase 6 retro) and **rollup queue size** (framework-wide lessons awaiting upstream PR)
+- A reminder: `/forge-rollup` to PR framework-wide lessons back to the forge repo; `/loop 1h /forge-watch-logs` and `/loop 30m /forge-watch` to start the Phase 7 continuous-improvement loops
 
 If the orchestrator soft-failed, tell the user:
 - Which phase(s) capped out

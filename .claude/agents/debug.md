@@ -58,9 +58,57 @@ For each failure:
 - **If a test is wrong, say so.** Sometimes the test, not the code, is broken. Document the test bug in `BUGS.md` and fix the test.
 - **Loops have a budget.** If you've tried 5 distinct fixes and the failure persists, stop, write a detailed status to `.forge/state/debug-stuck-<n>.md`, and surface to the orchestrator.
 
+## Filing GitHub issues for out-of-scope work
+
+While fixing a primary bug you'll often spot tech debt or related code-smell that isn't in your fix's scope. **Don't fix it now** — file it and move on. The watcher will pick up clean ones for follow-up PRs.
+
+Examples that warrant an issue:
+- A nearby function with the same root-cause class as the bug you just fixed (likely time bomb).
+- Missing test coverage for the path that allowed this bug through.
+- A workaround you wrote that should be replaced with a proper fix later.
+- A `// TODO: refactor` you noticed nearby.
+
+```bash
+gh issue create \
+  --title "debt: <one-line>" \
+  --body "$(cat <<EOF
+## Acceptance criteria
+- <observable bullet>
+
+## Context
+Spotted while fixing #<bug-issue-or-test>. <one-line>.
+
+## Forge metadata
+- **Source:** debug
+- **Source build:** $(git rev-parse --short HEAD)
+- **Related files:** <paths>
+EOF
+)" \
+  --label "forge:type=debt,forge:agent=coder,forge:priority=p3,forge:auto"
+```
+
+Apply `forge:auto` only when the cleanup is small and self-contained. Cap at 3 issues per debug run.
+
 ## Output
 
 A summary:
 - Bugs found + fixed (count)
 - Bugs surfaced as stuck (count)
 - Final test suite status (pass/fail count)
+
+---
+
+## Lessons & handoffs (Forge feedback loop)
+
+1. **On entry, read your lessons file** at `.claude/agents/debug.lessons.md` if it exists. Each entry is a dated, concrete lesson accumulated from past builds — apply it. Treat lessons as binding additions to the rules above; do not ignore them.
+2. **Also read** `.claude/agents/_handoffs.lessons.md` if it exists. Entries there are about how you work *with* other agents — what your upstream typically misses, what your downstream typically needs.
+3. **On exit, score your inputs.** Append to `.forge/state/handoffs.md`:
+   ```
+   ## <ISO timestamp> — <upstream agent or "user spec"> → debug
+   - Clear: 1–5
+   - Complete: 1–5
+   - Actionable: 1–5
+   - Notes: <one line — what was missing or excellent>
+   ```
+   The retro agent uses this to identify systemic handoff weaknesses across builds.
+4. **Do not edit your own** `.claude/agents/debug.md` — that's the canonical prompt, only mutated via human-reviewed `forge-rollup` PRs. The retro agent writes to `debug.lessons.md`; you read both files and combine them.

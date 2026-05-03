@@ -16,6 +16,22 @@
   "deployLoop": {
     "maxIterations": 3
   },
+  "watcher": {
+    "enabled": true,
+    "intervalMin": 30,
+    "maxConcurrent": 1,
+    "maxPerRun": 3
+  },
+  "logWatcher": {
+    "enabled": true,
+    "intervalMin": 60,
+    "lookbackMin": 60,
+    "errorRatePerMin": 1,
+    "p95LatencyMs": 2000,
+    "minOccurrences": 3,
+    "postDeployQuietMin": 30,
+    "maxIssuesPerRun": 3
+  },
   "viewports": {
     "desktop": { "width": 1280, "height": 800 },
     "mobile":  { "width": 375,  "height": 812 },
@@ -37,6 +53,9 @@
     "debug":           "claude-opus-4-7",
     "persona":         "claude-sonnet-4-6",
     "codeReview":      "claude-sonnet-4-6",
-    "securityReview":  "claude-opus-4-7"
+    "securityReview":  "claude-opus-4-7",
+    "retro":           "claude-opus-4-7",
+    "logWatcher":      "claude-opus-4-7",
+    "issueWatcher":    "claude-sonnet-4-6"
   }
 }

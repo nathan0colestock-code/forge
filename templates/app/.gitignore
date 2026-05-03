@@ -20,6 +20,10 @@ playwright/.auth/
 .forge/transcripts/*.md
 .forge/state/
 
+# Forge feedback loop:
+#   .forge/rollup/  — committed (queues lessons across builds)
+#   .claude/agents/*.lessons.md — committed (per-app accumulated learning)
+
 # Forge generated artifacts (regenerated each build — keep out of git)
 BUILD_LOG.md
 BUGS.md

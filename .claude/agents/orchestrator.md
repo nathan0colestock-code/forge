@@ -170,3 +170,20 @@ Next step:    Read BUILD_FAILED.md, then re-run /forge-build to resume.
 - **Visual quality is a hard requirement.** Don't ship below the floor.
 - **App icon is part of visual quality.** A great app with a default icon is not a finished app.
 - **No silent failures.** Every error gets a `BUILD_LOG.md` entry.
+
+---
+
+## Lessons & handoffs (Forge feedback loop)
+
+1. **On entry, read your lessons file** at `.claude/agents/orchestrator.lessons.md` if it exists. Each entry is a dated, concrete lesson accumulated from past builds — apply it. Treat lessons as binding additions to the rules above; do not ignore them.
+2. **Also read** `.claude/agents/_handoffs.lessons.md` if it exists. Entries there are about how you work *with* other agents — what your upstream typically misses, what your downstream typically needs.
+3. **On exit, score your inputs.** Append to `.forge/state/handoffs.md`:
+   ```
+   ## <ISO timestamp> — <upstream agent or "user spec"> → orchestrator
+   - Clear: 1–5
+   - Complete: 1–5
+   - Actionable: 1–5
+   - Notes: <one line — what was missing or excellent>
+   ```
+   The retro agent uses this to identify systemic handoff weaknesses across builds.
+4. **Do not edit your own** `.claude/agents/orchestrator.md` — that's the canonical prompt, only mutated via human-reviewed `forge-rollup` PRs. The retro agent writes to `orchestrator.lessons.md`; you read both files and combine them.
