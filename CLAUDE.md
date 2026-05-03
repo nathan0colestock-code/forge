@@ -19,6 +19,7 @@ Forge is a Claude Code agent system (subagents + skills) that turns an `APP_SPEC
 | Pre-processed spec for agents | `.forge/state/spec.json` (after Phase 0.1) |
 | Open questions surfaced by spec agent | `.forge/state/assumptions.md` |
 | Mid-build user notes | `.forge/state/notes.md` (orchestrator polls between phases) |
+| Hard-won integration lessons (Clerk, Fly, etc.) | `docs/clerk-integration.md` |
 
 ## Read before working
 
