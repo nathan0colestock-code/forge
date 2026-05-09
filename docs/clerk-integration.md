@@ -4,7 +4,27 @@ Hard-won lessons from deploying Clerk auth on Fly.io with both Next.js (forge st
 
 ---
 
-## 1. `NEXT_PUBLIC_*` env vars must be Fly secrets too
+## 1. Single-tenant: `NEXT_PUBLIC_CLERK_SIGN_UP_URL` must be `/sign-up`, not `/sign-in`
+
+**Category:** Auth / Clerk
+**Severity:** blocks first login
+
+**The bug:** In a single-tenant Clerk app the owner can never create their first account if `NEXT_PUBLIC_CLERK_SIGN_UP_URL` is set to `/sign-in`.
+
+**Why it happens:** The Clerk `<SignIn>` component renders a "Create account" link that uses `NEXT_PUBLIC_CLERK_SIGN_UP_URL` to decide where to send the user. When that value is `/sign-in`, clicking "Create account" navigates back to the sign-in page, which renders the same link again — an infinite redirect loop with no way out.
+
+**The fix:** Always set the sign-up URL to the actual sign-up route:
+
+```bash
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+```
+
+**Forge scaffold note:** The `forge-build` / `integration-setup` skills and the `.env.example` template must default to `/sign-up` for `NEXT_PUBLIC_CLERK_SIGN_UP_URL`. Never mirror both vars to `/sign-in`.
+
+---
+
+## 2. `NEXT_PUBLIC_*` env vars must be Fly secrets too
 
 **The bug:** `integration-setup` Step 7 originally skipped `NEXT_PUBLIC_*` vars when running `fly secrets set`, assuming they're baked into the client bundle at build time.
 
@@ -20,7 +40,7 @@ fly secrets set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_... CLERK_SECRET_KEY=s
 
 ---
 
-## 2. Clerk dashboard: add deployed URL after first deploy
+## 3. Clerk dashboard: add deployed URL after first deploy
 
 After deploying to Fly.io, sign-in redirects will silently fail unless the deployed URL is registered in the Clerk dashboard.
 
@@ -32,7 +52,7 @@ This applies to both test keys (`pk_test_`) and live keys. The `integration-setu
 
 ---
 
-## 3. Fly volumes break rolling deploys
+## 4. Fly volumes break rolling deploys
 
 If your app uses a Fly persistent volume (`[[mounts]]` in `fly.toml`), the default rolling deploy strategy fails — it tries to start a new machine before stopping the old one, but a volume can only be attached to one machine at a time.
 
@@ -49,7 +69,7 @@ This stops the old machine first (brief downtime), then starts the new one so th
 
 ---
 
-## 4. Clerk JS v6 browser SDK (non-Next.js contexts only)
+## 5. Clerk JS v6 browser SDK (non-Next.js contexts only)
 
 If ever building a vanilla JS app that loads Clerk via CDN:
 
@@ -82,7 +102,7 @@ if (!clerk.user) {
 
 ---
 
-## 5. Fly deploy checklist for Clerk apps
+## 6. Fly deploy checklist for Clerk apps
 
 After initial setup and on each production key rotation:
 
@@ -90,3 +110,4 @@ After initial setup and on each production key rotation:
 - [ ] Clerk Dashboard → Configure → Paths → Fallback development host = `https://<slug>.fly.dev`
 - [ ] If using Fly volumes: `fly deploy --strategy immediate` (not the default rolling strategy)
 - [ ] Smoke test: visit the deployed URL and confirm redirect to Clerk sign-in page
+- [ ] Smoke test: click "Create account" and confirm it goes to `/sign-up`, NOT back to `/sign-in`

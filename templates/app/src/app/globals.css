@@ -56,26 +56,6 @@
     --border-strong: #44403c;
   }
 
-  /* CSS-only fallback: applies dark tokens when system prefers dark and no .dark class is set by JS */
-  @media (prefers-color-scheme: dark) {
-    :root:not(.light) {
-      --bg: #0a0a0a;
-      --bg-subtle: #171717;
-      --bg-elevated: #1c1917;
-
-      --fg: #fafaf9;
-      --fg-muted: #a8a29e;
-      --fg-subtle: #57534e;
-
-      --accent: #fafaf9;
-      --accent-fg: #0a0a0a;
-      --accent-subtle: #292524;
-
-      --border: #292524;
-      --border-strong: #44403c;
-    }
-  }
-
   html { -webkit-text-size-adjust: 100%; }
   body { font-feature-settings: 'cv11', 'ss01'; }
   *, *::before, *::after { border-color: var(--border); }

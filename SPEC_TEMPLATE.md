@@ -36,8 +36,18 @@ External services, APIs, or data sources beyond the canonical Forge stack.
 - Installable: yes (always) / describe special install behavior
 - Push notifications: yes / no
 
-## Design Vibe
-The aesthetic in plain language. Reference apps, adjectives, colors, moods. What it should feel like — and what it should absolutely NOT feel like.
+## Brand & App Icon
+Every Forge app ships a real, professional brand mark that doubles as the iPhone home-screen icon. Fill these or accept the spec agent's `[ASSUMED]` defaults.
+
+- **Brand name (display):** the name as it should appear on the home screen (≤ 12 chars works best on iOS)
+- **Logo concept (1–2 sentences):** what the mark depicts and why. e.g. "A single hand-drawn arc, off-center, evoking momentum without speed."
+- **Icon style:** glyph-only / monogram / abstract mark / illustrative
+- **Primary brand color:** name + hex, e.g. "warm coral, #FF6B5C"
+- **Secondary / accent color:** optional
+- **Tone / feel:** 3–5 adjectives, e.g. "editorial, calm, confident, monochrome, considered"
+- **Inspirations / anti-inspirations:** "feels like Linear's icon, NOT like a generic SaaS gradient blob"
+
+The designer agent uses these to render a brand mark and then `npm run icons:generate` produces every required size (180, 192, 512, maskable 512) plus the favicon and apple-touch-icon.
 
 ## Responsive & Theme Requirements
 All Forge apps must satisfy these non-negotiable baselines — no exceptions, no spec override needed:
@@ -47,8 +57,11 @@ All Forge apps must satisfy these non-negotiable baselines — no exceptions, no
 - **System-adaptive**: defaults to the user's OS preference (`prefers-color-scheme`) via `next-themes` (`defaultTheme: "system"`). Manual toggle is optional but system default is required.
 - **No hardcoded colors**: all color values go through CSS custom properties (`var(--bg)`, `var(--fg)`, etc.) so theme switching is seamless.
 
+## Design Vibe
+The aesthetic in plain language. Reference apps, adjectives, colors, moods. What it should feel like — and what it should absolutely NOT feel like.
+
 ## Success Criteria
-3–5 concrete, observable things that must be true for v1 to be done.
+3–5 concrete, observable things that must be true for v1 to be done. At least one must address visual quality (e.g. "Visual QA score ≥ 8 on every key screen, app icon recognizable at 60×60").
 
 ## Out of Scope for V1
 Things that are tempting but should NOT be built yet.

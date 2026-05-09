@@ -55,8 +55,5 @@ if [[ -n "$DOMAIN" ]]; then
 
   echo
   echo "  Next: add a DNS record at your registrar:"
-  echo "    CNAME  $(echo "$DOMAIN" | cut -d. -f1)  →  $(echo "$FLY_URL" | sed 's|https://||')"
-  echo
-  echo "  Then verify with: fly certs show $DOMAIN"
-  echo "  Live at: https://$DOMAIN  (after DNS propagates)"
+  echo "    CNAME  $DOMAIN  →  $(grep -E '^app\s*=' fly.toml | head -1 | sed -E 's/.*"([^"]+)".*/\1/').fly.dev"
 fi
