@@ -1,0 +1,172 @@
+Got it. Let me walk through real workflows first — that's where the design lives — then surface the questions I genuinely can't answer alone.
+
+# Comms — spec v0.2
+
+## Five user workflows I'm designing for
+
+### 1. Morning triage (the daily one)
+You open `[comms.app](http://comms.app)` in Chrome. You see one inbox view with channel filters (All / Email / iMessage / Signal / SMS / Calls) — not a forced merge, because email and iMessage have very different rhythms, but a single keyboard-driven surface across all of them.
+
+Top of the screen: a **"Pending Review"** badge — `4 drafts waiting`. These are workflow-generated drafts queued overnight. You handle those first because they're time-sensitive (a stage-2 email scheduled for "7 days after stage 1" misses its purpose if you sit on it).
+
+You blast through email with `j/k/e/r/w` (next/prev/archive/ref/workflow). Threads from Maddie/Abi/Andy/Tom get auto-highlighted (key relationships). Anything you want bulletproof to know about, hit `r` and pick refs from autocomplete sourced from data/people.csv, commitments timeline, data/scripture_refs.csv.
+
+### 2. Pastoral care followup (the workflow one)
+You met a visiting family Sunday. From their person view (or via `w` on their first email), you start workflow `new-visitor`. Stage 1 fires immediately: comms drafts a warm thanks-for-visiting email *from `pastor@ctk` because the workflow's `default_account` is set there*. It lands in Pending Review with a `[new-visitor → stage 1]` tag. You tweak the personal sentence, send.
+
+7 days later, stage 2 (an iMessage, not email — `send_imessage` step) auto-drafts in Pending Review: "Hey, hope your week's been good — would love to grab coffee." You approve, your Mac helper sends it as a real iMessage from your number.
+
+Two weeks later you bump into them at a community event, they say they're interested in joining a small group. From their person view on your phone (mobile-responsive web), you advance to stage 3 manually. That fires a stage-3 draft (email with small-group info packet) into Pending Review. Etc.
+
+**Key insight from this scenario:** workflows must support both **time-triggered** (`delay: 7d`) and **manual** (`advance_when: manual`) stage transitions, and must be **channel-mixed** (email→iMessage→email is normal pastoral cadence).
+
+### 3. Reference a thread into bulletproof
+You're reading a thread with Andy about Romans 8 sermon prep. Hit `r`. Picker opens with two fields: ref_type (person/scripture/commitment/topic/meeting/project) and ref_value (autocomplete). You add `person:Andy Stanley` and `scripture:Romans 8`. Done.
+
+Now: searching `ref:Andy ref:Romans-8` in comms surfaces this thread. *And* — because the bulletproof CSV mirror writes `thread_refs` rows back to `data/thread_refs.csv` — your `/symptom-investigate`-style skills can join thread refs against everything else.
+
+### 4. Compose with channel awareness
+Hit `c`. First field is **channel + account** (defaults intelligently: replying to a ctk.com address uses `pastor@ctk`; replying to an iMessage uses iMessage). Composer adapts:
+- Email: subject, multiple recipients, signature picker, send-later button
+- iMessage/Signal: no subject, single contact or group picker, no signature
+- All channels: snippet/template insertion via `/template-name`, draft autosave every 5s
+
+Send via:
+- **Gmail** → server-side, Gmail API
+- **iMessage / Signal** → server queues `send_task`, Mac helper picks it up via websocket, sends locally, reports back. UI shows pending state. If Mac is offline, status banner: *"Mac helper offline — 2 messages will send when it reconnects."*
+
+### 5. Search (the "blazingly fast" one)
+Single search box. Operators parsed: `from: to: account: channel: ref: before: after: has:attachment label: in:pending-review`. Free-text otherwise.
+
+SQLite FTS5 over `subject + body + sender + recipients + attachments_text` (PDF/docx OCR is a v0.5 stretch — call it now: do we want it for v1?). Indexed columns for filters. Target p50 <50ms over 250k+ rows. Saved searches in left rail. `gs` to focus search from anywhere.
+
+---
+
+## Architecture
+
+```
+   Gmail accounts ─► server (Fly.io) ──► SQLite (comms.db) ◄── FTS5 index
+                         │  │ │                ▲
+                         │  │ │                │
+                         │  │ └─► workflow engine (5-min tick)
+                         │  └───► REST + websocket API
+                         │                      ▲
+                         ▼                      │
+                  web UI (FastAPI + HTMX        │
+                  or Next.js — see Q5)          │
+                                                │
+                                        ┌───────┴────────┐
+                                        │  Mac helper    │
+                                        │  daemon        │
+                                        │  (LaunchAgent) │
+                                        └────────────────┘
+                                          │ │ │ │
+                                          │ │ │ └─ sends iMessage (AppleScript)
+                                          │ │ └─── sends Signal (signal-cli)
+                                          │ └───── tails ~/Library/Messages/chat.db
+                                          └─────── runs signal-cli linked listener
+```
+
+- **Server**: Fly.io app, persistent volume for `comms.db`, SQLite + FTS5, Litestream for backup to S3.
+- **Mac helper**: small Python daemon (LaunchAgent), authenticated websocket to server. Two responsibilities: tail iMessage/Signal locally and push deltas; consume `send_task`s and execute. Status heartbeat every 30s so the server knows if it's online.
+- **Web UI**: keyboard-first 3-pane (account list / thread list / reader). Mobile-responsive (no separate native app for v1).
+
+## Data model (one DB, six core tables)
+
+```
+accounts        (id, channel, address, oauth_json, active)
+messages        (id, account_id, channel, channel_thread_id, direction,
+                 sent_at, subject, body, body_html, participants_json,
+                 attachments_json, raw_headers_json)
+threads         (id, channel, account_id, participants_hash, subject,
+                 last_message_at, last_message_id, unread_count, labels_json)
+thread_refs     (thread_id, ref_type, ref_value, added_at, note)
+workflows       (name, yaml_path, version, last_loaded_at)
+person_workflow_state (person, workflow, current_stage, entered_at, history_json,
+                       paused, default_account)
+send_tasks      (id, channel, account_id, to_json, subject, body,
+                 scheduled_for, status, executed_at, error,
+                 workflow_ref_json)
+```
+
+FTS5 virtual table mirrors `messages.subject + body + participants + attachments_text`.
+
+**Migration on day 1**: the existing 231k rows in data/messages.csv (already includes email + iMessage + SMS + Signal + calls) imports straight into `messages`. Search and references work against your full history immediately. bin/sync_email.py keeps running in parallel for safety; once parity is proven we deprecate it and the comms server becomes the source. CSV mirror written nightly so existing CLAUDE.md queries don't break.
+
+## Workflows — refinements from the scenarios
+
+A workflow YAML looks like:
+
+```yaml
+name: new-visitor
+default_account: pastor@ctk.com
+stages:
+  - id: thanks
+    advance_when: auto         # fires on workflow start
+    on_enter:
+      - send_email:
+          template: visitor/thanks.md
+          delay: 0
+  - id: coffee-invite
+    advance_when: time          # auto-advance on delay
+    delay_after_prev: 7d
+    on_enter:
+      - send_imessage:
+          template: visitor/coffee.md
+  - id: small-group-info
+    advance_when: manual        # you advance from person view
+    on_enter:
+      - send_email:
+          template: visitor/small-group.md
+  - id: completed
+```
+
+- **All steps land in Pending Review by default** — `auto_send: true` per-step opt-in if you ever want it.
+- **Templates** at `data/comms/templates/<workflow>/<step>.md`, Jinja vars: `{{ person.first_name }}, {{ church.name }}, {{ today }}, {{ last_meeting.date }}` etc. Vars resolved from people.csv + meetings.csv.
+- **Pause**: any person can be paused on a workflow (`paused: true`) — useful if life happens.
+- **Why advance manually for some stages?** Because not every transition is time-driven. "They came to small group on Sunday" only you know.
+- **Built-ins on day 1**: `new-visitor`, `membership-inquiry`, `pastoral-followup`, `reference-request` (port the existing `reference` skill), `meeting-prep` (auto-fires day-before email with agenda). I'd love your list of the 5 you actually need most.
+
+## v0 scope vs. later
+
+**v0 (ship this first):**
+- Gmail ingestion (all accounts) + iMessage + Signal read
+- Send via Gmail
+- Reference layer
+- FTS5 search
+- One workflow (`new-visitor`) end-to-end with email-only steps
+
+**v0.5:**
+- Mac helper sends iMessage + Signal
+- Workflow time-triggers + manual transitions
+- Pending Review queue UI
+- Mobile-responsive
+
+**v1:**
+- All 5 built-in workflows
+- Attachment OCR for search
+- Snooze / send-later
+- Pastoral-care nudges (e.g., "Tom Dodds — 47 days no contact")
+
+**Later (don't design for these now):**
+- Multi-user / delegate access
+- Calendar integration beyond meeting-prep
+- Analytics / reports
+
+---
+
+## Questions I genuinely need before going deeper
+
+1. **Send-from-which-account logic.** When replying to an existing email, obviously match the account it was sent to. When *composing fresh* from a person view, what's the rule? Person's `area` (e.g., area=ctk → `pastor@ctk`)? A per-person `default_account`? Always ask?
+
+2. **Cross-channel threading.** If you email Maddie about a counseling decision and then text her about it, do you want comms to show that as one merged "conversation" or two separate threads with shared refs? My default is **separate threads, linked by refs** (cleaner data, search still works). Keep that?
+
+3. **Mac helper for read-only iMessage/Signal vs. full send.** Building send is the harder lift — AppleScript for iMessage is brittle, signal-cli send is fine. If you mostly *read* on Mac and *reply on phone* via native apps, we could skip outbound iMessage/Signal in v0 entirely (Mac helper just tails). Worth it?
+
+4. **Pending Review UX detail.** When you approve a workflow draft, is it "send now" or "schedule for [smart time]"? Workflow steps could specify "send between 9am–11am local" so a draft queued at 6am doesn't fire at 6:01am. Want that?
+
+5. **UI stack.** FastAPI + HTMX (lighter, server-rendered, fits SQLite-on-Fly nicely) vs. Next.js + tRPC (richer interactions, but more moving parts). I'd pick HTMX for v0 — keyboard nav, less JS to maintain, and you already have a Python toolchain. Override?
+
+6. **Repo location.** New repo `nathancolestock/comms`? Or a subdir of bulletproof (`bulletproof/comms/`)? Splitting feels right since deployed Fly app + Mac LaunchAgent are different lifecycles than the rest of bulletproof.
+
+Answer those six and I'll turn this into a real `SPEC.md` in the chosen repo, plus a v0 milestone plan.
